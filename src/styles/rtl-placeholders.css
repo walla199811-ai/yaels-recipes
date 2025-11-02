@@ -1,0 +1,133 @@
+/* Force RTL placeholder alignment for all inputs */
+input::placeholder,
+textarea::placeholder,
+input::-webkit-input-placeholder,
+textarea::-webkit-input-placeholder,
+input::-moz-placeholder,
+textarea::-moz-placeholder,
+input:-ms-input-placeholder,
+textarea:-ms-input-placeholder {
+  text-align: right !important;
+  direction: rtl !important;
+}
+
+/* Target Material-UI specific input classes */
+.MuiOutlinedInput-input::placeholder,
+.MuiOutlinedInput-input::-webkit-input-placeholder,
+.MuiOutlinedInput-input::-moz-placeholder,
+.MuiOutlinedInput-input:-ms-input-placeholder {
+  text-align: right !important;
+  direction: rtl !important;
+}
+
+.MuiInputBase-input::placeholder,
+.MuiInputBase-input::-webkit-input-placeholder,
+.MuiInputBase-input::-moz-placeholder,
+.MuiInputBase-input:-ms-input-placeholder {
+  text-align: right !important;
+  direction: rtl !important;
+}
+
+.MuiSelect-select::placeholder,
+.MuiSelect-select::-webkit-input-placeholder,
+.MuiSelect-select::-moz-placeholder,
+.MuiSelect-select:-ms-input-placeholder {
+  text-align: right !important;
+  direction: rtl !important;
+}
+
+/* Fix button icon spacing - using higher specificity selectors */
+.MuiButtonBase-root.MuiButton-root {
+  padding: 8px 12px !important;
+}
+
+.MuiButtonBase-root.MuiButton-root.MuiButton-sizeSmall {
+  padding: 6px 8px !important;
+}
+
+.MuiButtonBase-root.MuiButton-root.MuiButton-sizeLarge {
+  padding: 12px 16px !important;
+}
+
+.MuiButtonBase-root.MuiButton-root .MuiButton-startIcon {
+    padding-left: 4px;
+    margin-right: 0 !important;
+}
+
+.MuiButtonBase-root.MuiButton-root .MuiButton-endIcon {
+  margin-left: 8px !important;
+  margin-right: 0 !important;
+}
+
+.MuiButtonBase-root.MuiButton-root.MuiButton-sizeSmall .MuiButton-startIcon {
+    padding-left: 4px;
+    margin-right: 0 !important;
+}
+
+.MuiButtonBase-root.MuiButton-root.MuiButton-sizeSmall .MuiButton-endIcon {
+  margin-left: 6px !important;
+}
+
+.MuiButtonBase-root.MuiButton-root.MuiButton-sizeLarge .MuiButton-startIcon {
+    padding-left: 4px;
+    margin-right: 0px !important;
+}
+
+.MuiButtonBase-root.MuiButton-root.MuiButton-sizeLarge .MuiButton-endIcon {
+  margin-left: 12px !important;
+}
+
+/* Apply your working fix */
+[class*="MuiButton-startIcon"] {
+    padding-left: 4px;
+    margin-right: 0px !important;
+}
+
+[class*="MuiButton-endIcon"] {
+  padding-right: 4px !important;
+  margin-left: 0px !important;
+  margin-right: 0 !important;
+}
+
+/* Size-specific overrides */
+.MuiButton-sizeSmall [class*="MuiButton-startIcon"] {
+    padding-left: 4px;
+    margin-right: 0px !important;
+}
+
+.MuiButton-sizeSmall [class*="MuiButton-endIcon"] {
+  padding-right: 3px !important;
+}
+
+.MuiButton-sizeLarge [class*="MuiButton-startIcon"] {
+    padding-left: 4px;
+    margin-right: 0px !important;
+}
+
+.MuiButton-sizeLarge [class*="MuiButton-endIcon"] {
+  padding-right: 6px !important;
+}
+
+/* Fix IconButton spacing */
+.MuiIconButton-root {
+  margin: 0 4px !important;
+}
+
+.MuiIconButton-sizeSmall {
+  margin: 0 2px !important;
+}
+
+.MuiIconButton-sizeLarge {
+  margin: 0 6px !important;
+}
+
+/* Fix InputAdornment spacing */
+.MuiInputAdornment-positionStart {
+  margin-left: 6px !important;
+  margin-right: 0 !important;
+}
+
+.MuiInputAdornment-positionEnd {
+  margin-left: 0 !important;
+  margin-right: 6px !important;
+}
