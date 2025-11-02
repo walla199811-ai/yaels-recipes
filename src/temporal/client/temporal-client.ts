@@ -17,12 +17,31 @@ let client: Client | null = null
 export async function getTemporalClient(): Promise<Client> {
   if (!client) {
     try {
-      // Connect to Temporal Server
-      const connection = await Connection.connect({
-        address: process.env.TEMPORAL_ADDRESS || 'localhost:7234',
-        connectTimeout: '10s',
-        callTimeout: '30s',
-      })
+      let connection: Connection
+
+      if (process.env.NODE_ENV === 'production' && process.env.TEMPORAL_CLIENT_CERT_PATH && process.env.TEMPORAL_CLIENT_KEY_PATH) {
+        // Temporal Cloud connection for production
+        console.log('🔗 Connecting to Temporal Cloud...')
+        connection = await Connection.connect({
+          address: process.env.TEMPORAL_ADDRESS!,
+          tls: {
+            clientCertPair: {
+              crt: Buffer.from(process.env.TEMPORAL_CLIENT_CERT_PATH, 'base64'),
+              key: Buffer.from(process.env.TEMPORAL_CLIENT_KEY_PATH, 'base64'),
+            },
+          },
+          connectTimeout: '10s',
+          callTimeout: '30s',
+        })
+      } else {
+        // Local development connection
+        console.log('🔗 Connecting to local Temporal server...')
+        connection = await Connection.connect({
+          address: process.env.TEMPORAL_ADDRESS || 'localhost:7234',
+          connectTimeout: '10s',
+          callTimeout: '30s',
+        })
+      }
 
       client = new Client({
         connection,

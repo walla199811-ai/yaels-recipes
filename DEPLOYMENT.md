@@ -8,7 +8,7 @@ This guide covers deploying the Yael's Recipes application to production using f
 - **Database**: Neon PostgreSQL (Free tier: 512MB)
 - **Images**: Cloudinary (Free tier: 25GB)
 - **Email**: Gmail SMTP (Free)
-- **Temporal Worker**: Railway or fly.io (Free tier)
+- **Temporal**: Temporal Cloud (Free tier: 1000 actions/month)
 
 ## Prerequisites
 
@@ -16,7 +16,7 @@ This guide covers deploying the Yael's Recipes application to production using f
 2. Vercel account (sign up with GitHub)
 3. Neon account (PostgreSQL)
 4. Cloudinary account
-5. Railway account (for Temporal worker)
+5. Temporal Cloud account
 
 ## Step 1: Database Setup (Neon PostgreSQL)
 
@@ -53,8 +53,11 @@ CLOUDINARY_CLOUD_NAME="your-cloud-name"
 CLOUDINARY_API_KEY="your-api-key"
 CLOUDINARY_API_SECRET="your-api-secret"
 
-# Temporal
-TEMPORAL_ADDRESS="your-temporal-worker.railway.app:443"
+# Temporal Cloud
+TEMPORAL_ADDRESS="your-namespace.a2dd6.tmprl.cloud:7233"
+TEMPORAL_NAMESPACE="your-namespace.a2dd6"
+TEMPORAL_CLIENT_CERT_PATH=""  # Temporal Cloud provides these via web UI
+TEMPORAL_CLIENT_KEY_PATH=""   # For production, use base64 encoded certs
 ```
 
 ## Step 2: Cloudinary Setup
@@ -179,58 +182,106 @@ npx prisma migrate deploy
 npx prisma db seed
 ```
 
-## Step 5: Deploy Temporal Worker (Railway)
+## Step 5: Set Up Temporal Cloud
 
-### 5.1 Create Worker Dockerfile
+### 5.1 Create Temporal Cloud Account
 
-Create `Dockerfile.worker`:
-```dockerfile
-FROM node:18-alpine
-
-WORKDIR /app
-
-# Copy package files
-COPY package*.json ./
-COPY prisma ./prisma/
-
-# Install dependencies
-RUN npm ci --omit=dev
-
-# Copy source code
-COPY . .
-
-# Generate Prisma client
-RUN npx prisma generate
-
-# Expose port
-EXPOSE 8080
-
-# Start worker
-CMD ["npm", "run", "temporal:worker"]
-```
-
-### 5.2 Create Railway Configuration
-
-Create `railway.toml`:
-```toml
-[build]
-builder = "dockerfile"
-dockerfilePath = "Dockerfile.worker"
-
-[deploy]
-startCommand = "npm run temporal:worker"
-restartPolicyType = "always"
-```
-
-### 5.3 Deploy Worker to Railway
-
-1. Go to [railway.app](https://railway.app)
+1. Go to [cloud.temporal.io](https://cloud.temporal.io)
 2. Sign up with GitHub
-3. Create new project from GitHub repo
-4. Configure:
-   - Select your repository
-   - Select Dockerfile.worker
-   - Add environment variables (same as Vercel)
+3. Create a new namespace:
+   - Choose a unique namespace name (e.g., `yaels-recipes-prod`)
+   - Select region closest to your users
+4. Download the certificate and key files
+
+### 5.2 Configure Temporal Cloud Connection
+
+1. In your namespace dashboard, get:
+   - Namespace address (e.g., `yaels-recipes-prod.a2dd6.tmprl.cloud:7233`)
+   - Client certificate (.pem file)
+   - Private key (.key file)
+
+2. For Vercel deployment, convert certificates to base64:
+```bash
+# Convert certificate to base64 (single line)
+base64 -i client.pem | tr -d '\n'
+
+# Convert key to base64 (single line)
+base64 -i client.key | tr -d '\n'
+```
+
+### 5.3 Update Temporal Client for Cloud
+
+Update `src/temporal/client/temporal-client.ts` for production:
+```typescript
+import { Client, Connection } from '@temporalio/client'
+
+export async function createTemporalClient() {
+  if (process.env.NODE_ENV === 'production') {
+    // Temporal Cloud connection
+    const connection = await Connection.connect({
+      address: process.env.TEMPORAL_ADDRESS!,
+      tls: {
+        clientCertPair: process.env.TEMPORAL_CLIENT_CERT_PATH && process.env.TEMPORAL_CLIENT_KEY_PATH
+          ? {
+              crt: Buffer.from(process.env.TEMPORAL_CLIENT_CERT_PATH, 'base64'),
+              key: Buffer.from(process.env.TEMPORAL_CLIENT_KEY_PATH, 'base64'),
+            }
+          : undefined,
+      },
+    })
+
+    return new Client({
+      connection,
+      namespace: process.env.TEMPORAL_NAMESPACE!,
+    })
+  } else {
+    // Local development connection
+    return new Client({
+      connection: await Connection.connect({
+        address: process.env.TEMPORAL_ADDRESS || 'localhost:7234',
+      }),
+    })
+  }
+}
+```
+
+### 5.4 Deploy Worker to Vercel as Serverless Function
+
+Since we're using Temporal Cloud, we can run the worker as a Vercel serverless function for small workloads.
+
+Create `api/temporal-worker.ts`:
+```typescript
+import { Worker } from '@temporalio/worker'
+import * as activities from '../src/temporal/activities/recipe-activities'
+import { createTemporalClient } from '../src/temporal/client/temporal-client'
+
+export default async function handler(req: any, res: any) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' })
+  }
+
+  try {
+    const client = await createTemporalClient()
+
+    const worker = await Worker.create({
+      connection: client.connection,
+      workflowsPath: require.resolve('../src/temporal/workflows'),
+      activities,
+      taskQueue: 'yaels-recipes-task-queue',
+    })
+
+    // Run worker for a short time (Vercel function timeout)
+    await Promise.race([
+      worker.run(),
+      new Promise(resolve => setTimeout(resolve, 25000)) // 25 second timeout
+    ])
+
+    res.status(200).json({ success: true })
+  } catch (error) {
+    console.error('Worker error:', error)
+    res.status(500).json({ error: 'Worker failed' })
+  }
+}
 
 ## Step 6: Configure Custom Domain (Optional)
 
