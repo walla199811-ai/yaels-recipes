@@ -218,7 +218,7 @@ export async function sendNotificationEmail(emailData: NotificationEmailInput): 
     })
 
     // Log this as a failure but don't throw - email failure shouldn't fail the entire workflow
-    return { success: false, error: errorMessage }
+    return { success: false }
   }
 }
 

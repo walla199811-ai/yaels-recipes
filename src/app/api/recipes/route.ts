@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { CreateRecipeInput, RecipeSearchFilters, RecipeCategory as TypeRecipeCategory } from '@/types/recipe'
-import { temporalRecipeClient } from '@/temporal/client'
+import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 
 const createRecipeSchema = z.object({
@@ -28,12 +28,26 @@ export async function GET(request: NextRequest) {
     // Check if requesting a specific recipe by ID
     const id = searchParams.get('id')
     if (id) {
-      const recipes = await temporalRecipeClient.getRecipes({ id })
-      const recipe = recipes.length > 0 ? recipes[0] : null
+      const recipe = await prisma.recipe.findUnique({
+        where: { id }
+      })
 
       if (recipe) {
+        const formattedRecipe = {
+          ...recipe,
+          description: recipe.description || undefined,
+          photoUrl: recipe.photoUrl || undefined,
+          category: recipe.category as TypeRecipeCategory,
+          ingredients: Array.isArray(recipe.ingredients)
+            ? (recipe.ingredients as any[]).sort((a: any, b: any) => a.order - b.order)
+            : (recipe.ingredients as any) || [],
+          instructions: Array.isArray(recipe.instructions)
+            ? (recipe.instructions as any[]).sort((a: any, b: any) => a.step - b.step)
+            : (recipe.instructions as any) || []
+        }
+
         return NextResponse.json({
-          recipes: [recipe],
+          recipes: [formattedRecipe],
           totalCount: 1
         })
       } else {
@@ -44,45 +58,66 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Build filters object from search parameters
-    const filters: RecipeSearchFilters = {}
+    // Build the where clause based on filters
+    const where: any = {}
 
-    // Apply query filter (search in title, description, and tags)
+    // Apply query filter (search in title, description, and ingredients)
     const query = searchParams.get('query')
     if (query) {
-      filters.query = query
+      where.OR = [
+        { title: { contains: query, mode: 'insensitive' } },
+        { description: { contains: query, mode: 'insensitive' } },
+        { ingredients: { some: { text: { contains: query, mode: 'insensitive' } } } }
+      ]
     }
 
     // Apply category filter
     const category = searchParams.get('category')
     if (category) {
-      filters.category = category as TypeRecipeCategory
+      where.category = category
     }
 
     // Apply tags filter
     const tags = searchParams.get('tags')
     if (tags) {
-      filters.tags = tags.split(',')
+      where.tags = { hasSome: tags.split(',') }
     }
 
     // Apply prep time filter
     const maxPrepTime = searchParams.get('maxPrepTime')
     if (maxPrepTime) {
-      filters.maxPrepTime = parseInt(maxPrepTime)
+      where.prepTimeMinutes = { lte: parseInt(maxPrepTime) }
     }
 
     // Apply cook time filter
     const maxCookTime = searchParams.get('maxCookTime')
     if (maxCookTime) {
-      filters.maxCookTime = parseInt(maxCookTime)
+      where.cookTimeMinutes = { lte: parseInt(maxCookTime) }
     }
 
-    // Fetch recipes using Temporal client
-    const recipes = await temporalRecipeClient.getRecipes(filters)
+    // Fetch recipes from database
+    const recipes = await prisma.recipe.findMany({
+      where,
+      orderBy: { createdAt: 'desc' }
+    })
+
+    // Format recipes to match expected interface
+    const formattedRecipes = recipes.map(recipe => ({
+      ...recipe,
+      description: recipe.description || undefined,
+      photoUrl: recipe.photoUrl || undefined,
+      category: recipe.category as TypeRecipeCategory,
+      ingredients: Array.isArray(recipe.ingredients)
+        ? (recipe.ingredients as any[]).sort((a: any, b: any) => a.order - b.order)
+        : (recipe.ingredients as any) || [],
+      instructions: Array.isArray(recipe.instructions)
+        ? (recipe.instructions as any[]).sort((a: any, b: any) => a.step - b.step)
+        : (recipe.instructions as any) || []
+    }))
 
     return NextResponse.json({
-      recipes,
-      totalCount: recipes.length
+      recipes: formattedRecipes,
+      totalCount: formattedRecipes.length
     })
   } catch (error) {
     console.error('Failed to fetch recipes:', error)
@@ -103,13 +138,92 @@ export async function POST(request: NextRequest) {
     // Extract user email from headers (if available) for notifications
     const userEmail = request.headers.get('x-user-email') || 'Unknown User'
 
-    // Create new recipe using Temporal client
-    const newRecipe = await temporalRecipeClient.createRecipe({
-      ...validatedData,
-      category: validatedData.category as TypeRecipeCategory
+    // Basic validation
+    if (!validatedData.title || validatedData.title.trim().length === 0) {
+      throw new Error('Recipe title is required')
+    }
+
+    if (!validatedData.ingredients || validatedData.ingredients.length === 0) {
+      throw new Error('At least one ingredient is required')
+    }
+
+    if (!validatedData.instructions || validatedData.instructions.length === 0) {
+      throw new Error('At least one instruction is required')
+    }
+
+    // Create recipe in database
+    const newRecipe = await prisma.recipe.create({
+      data: {
+        title: validatedData.title,
+        description: validatedData.description || null,
+        category: validatedData.category as any,
+        prepTimeMinutes: validatedData.prepTimeMinutes,
+        cookTimeMinutes: validatedData.cookTimeMinutes,
+        servings: validatedData.servings,
+        ingredients: validatedData.ingredients.map((ing, index) => ({
+          order: index + 1,
+          text: ing.text
+        })),
+        instructions: validatedData.instructions.map((inst, index) => ({
+          step: index + 1,
+          text: inst.text
+        })),
+        photoUrl: validatedData.photoUrl || null,
+        tags: validatedData.tags,
+        createdBy: validatedData.createdBy,
+        lastModifiedBy: validatedData.createdBy,
+      }
     })
 
-    return NextResponse.json(newRecipe, { status: 201 })
+    // Format the response
+    const formattedRecipe = {
+      ...newRecipe,
+      description: newRecipe.description || undefined,
+      photoUrl: newRecipe.photoUrl || undefined,
+      category: newRecipe.category as TypeRecipeCategory,
+      ingredients: newRecipe.ingredients as Array<{ order: number; text: string }>,
+      instructions: newRecipe.instructions as Array<{ step: number; text: string }>
+    }
+
+    // Send notification (non-blocking)
+    try {
+      if (process.env.EMAIL_USER && process.env.EMAIL_PASS && process.env.NOTIFICATION_EMAILS) {
+        const nodemailer = await import('nodemailer')
+
+        const transporter = nodemailer.default.createTransport({
+          host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+          port: parseInt(process.env.EMAIL_PORT || '587'),
+          secure: false,
+          auth: {
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASS,
+          },
+        })
+
+        const notificationEmails = process.env.NOTIFICATION_EMAILS.split(',')
+        const subject = `Recipe added: ${formattedRecipe.title}`
+        const emailBody = `
+          <h2>Recipe Added</h2>
+          <p><strong>${formattedRecipe.title}</strong> has been added by ${validatedData.createdBy}.</p>
+          <p><strong>Category:</strong> ${formattedRecipe.category}</p>
+          <p><strong>Prep Time:</strong> ${formattedRecipe.prepTimeMinutes} minutes</p>
+          <p><strong>Cook Time:</strong> ${formattedRecipe.cookTimeMinutes} minutes</p>
+          <p><strong>Servings:</strong> ${formattedRecipe.servings}</p>
+          ${formattedRecipe.description ? `<p><strong>Description:</strong> ${formattedRecipe.description}</p>` : ''}
+        `
+
+        await transporter.sendMail({
+          from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
+          to: notificationEmails.join(','),
+          subject,
+          html: emailBody,
+        })
+      }
+    } catch (emailError) {
+      console.warn('Failed to send notification email:', emailError)
+    }
+
+    return NextResponse.json(formattedRecipe, { status: 201 })
   } catch (error) {
     console.error('Failed to create recipe:', error)
 
@@ -143,14 +257,40 @@ export async function PUT(request: NextRequest) {
     // Extract user email from headers (if available) for notifications
     const userEmail = request.headers.get('x-user-email') || 'Unknown User'
 
-    // Update recipe using Temporal client
-    const updatedRecipe = await temporalRecipeClient.updateRecipe({
-      id,
-      ...updateData,
-      lastModifiedBy: userEmail
+    // Process data for database
+    const processedData: any = { ...updateData, lastModifiedBy: userEmail }
+
+    if (updateData.ingredients) {
+      processedData.ingredients = updateData.ingredients.map((ingredient: any, index: number) => ({
+        ...ingredient,
+        order: index + 1,
+      }))
+    }
+
+    if (updateData.instructions) {
+      processedData.instructions = updateData.instructions.map((instruction: any, index: number) => ({
+        ...instruction,
+        step: index + 1,
+      }))
+    }
+
+    // Update recipe in database
+    const updatedRecipe = await prisma.recipe.update({
+      where: { id },
+      data: processedData,
     })
 
-    return NextResponse.json(updatedRecipe)
+    // Format the response
+    const formattedRecipe = {
+      ...updatedRecipe,
+      description: updatedRecipe.description || undefined,
+      photoUrl: updatedRecipe.photoUrl || undefined,
+      category: updatedRecipe.category as TypeRecipeCategory,
+      ingredients: updatedRecipe.ingredients as any,
+      instructions: updatedRecipe.instructions as any,
+    }
+
+    return NextResponse.json(formattedRecipe)
   } catch (error) {
     console.error('Failed to update recipe:', error)
     return NextResponse.json(
@@ -176,8 +316,50 @@ export async function DELETE(request: NextRequest) {
     // Extract user email from headers (if available) for notifications
     const userEmail = request.headers.get('x-user-email') || 'Unknown User'
 
-    // Delete recipe using Temporal client
-    await temporalRecipeClient.deleteRecipe(id, userEmail)
+    // Get recipe for notification before deleting
+    const recipe = await prisma.recipe.findUnique({
+      where: { id }
+    })
+
+    if (recipe) {
+      // Send notification before deletion (non-blocking)
+      try {
+        if (process.env.EMAIL_USER && process.env.EMAIL_PASS && process.env.NOTIFICATION_EMAILS) {
+          const nodemailer = await import('nodemailer')
+
+          const transporter = nodemailer.default.createTransport({
+            host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+            port: parseInt(process.env.EMAIL_PORT || '587'),
+            secure: false,
+            auth: {
+              user: process.env.EMAIL_USER,
+              pass: process.env.EMAIL_PASS,
+            },
+          })
+
+          const notificationEmails = process.env.NOTIFICATION_EMAILS.split(',')
+          const subject = `Recipe deleted: ${recipe.title}`
+          const emailBody = `
+            <h2>Recipe Deleted</h2>
+            <p><strong>${recipe.title}</strong> has been deleted by ${userEmail}.</p>
+          `
+
+          await transporter.sendMail({
+            from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
+            to: notificationEmails.join(','),
+            subject,
+            html: emailBody,
+          })
+        }
+      } catch (emailError) {
+        console.warn('Failed to send notification email:', emailError)
+      }
+    }
+
+    // Delete from database
+    await prisma.recipe.delete({
+      where: { id }
+    })
 
     return NextResponse.json({ message: 'Recipe deleted successfully' })
   } catch (error: any) {
