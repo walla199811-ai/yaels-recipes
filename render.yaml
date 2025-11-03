@@ -16,7 +16,7 @@ services:
     env: node
     plan: free
     buildCommand: npm install && npx prisma generate
-    startCommand: npm run temporal:worker
+    startCommand: node start-temporal-worker.js
     envVars:
       - key: NODE_ENV
         value: production

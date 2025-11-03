@@ -29,9 +29,29 @@ async function run() {
   const finalAddress = temporalAddress.includes(':') ? temporalAddress : `${temporalAddress}:7233`
 
   console.log('🔗 [WORKER] Attempting connection to:', finalAddress)
-  connection = await NativeConnection.connect({
-    address: finalAddress,
-  })
+
+  // Add connection timeout and retry logic
+  try {
+    connection = await Promise.race([
+      NativeConnection.connect({
+        address: finalAddress,
+      }),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Connection timeout after 30 seconds')), 30000)
+      )
+    ]) as NativeConnection
+
+    console.log('✅ [WORKER] Successfully connected to Temporal server')
+  } catch (error) {
+    console.error('❌ [WORKER] Connection failed:', error)
+    console.log('🔄 [WORKER] Retrying connection in 10 seconds...')
+    await new Promise(resolve => setTimeout(resolve, 10000))
+
+    // Retry once more
+    connection = await NativeConnection.connect({
+      address: finalAddress,
+    })
+  }
 
   // Create a Worker with the Task Queue name from the client
   const worker = await Worker.create({
