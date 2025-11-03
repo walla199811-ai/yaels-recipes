@@ -1,28 +1,15 @@
 services:
-  # Temporal Server + HTTP Health Check (Free Plan Web Service)
+  # Combined Temporal Server + Worker (Single Service Solution)
   - type: web
-    name: yaels-recipes-temporal-server
+    name: yaels-recipes-temporal
     env: node
     plan: free
-    buildCommand: npm install && curl -sSf https://temporal.download/cli.sh | sh && cp /opt/render/.temporalio/bin/temporal ./temporal
-    startCommand: node start-temporal-server.js
+    buildCommand: npm install && npx prisma generate && curl -sSf https://temporal.download/cli.sh | sh && cp /opt/render/.temporalio/bin/temporal ./temporal
+    startCommand: node start-combined-temporal.js
     envVars:
       - key: NODE_ENV
         value: production
-
-  # Temporal Worker (Free Plan - Web Service with Worker Process)
-  - type: web
-    name: yaels-recipes-temporal-worker
-    env: node
-    plan: free
-    buildCommand: npm install && npx prisma generate
-    startCommand: node start-temporal-worker.js
-    envVars:
-      - key: NODE_ENV
-        value: production
-      - key: TEMPORAL_ADDRESS
-        value: yaels-recipes-temporal-server.onrender.com:80
-      # Add your environment variables here
+      # Database and application environment variables
       - key: DATABASE_URL
         sync: false # You'll set this in Render dashboard
       - key: EMAIL_HOST
