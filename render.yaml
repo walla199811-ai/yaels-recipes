@@ -9,8 +9,6 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      - key: PORT
-        value: 7233
 
   # Temporal Worker (Free Plan - Web Service with Worker Process)
   - type: web
@@ -23,7 +21,10 @@ services:
       - key: NODE_ENV
         value: production
       - key: TEMPORAL_ADDRESS
-        value: yaels-recipes-temporal-server.onrender.com:7233
+        fromService:
+          type: web
+          name: yaels-recipes-temporal-server
+          property: hostport
       # Add your environment variables here
       - key: DATABASE_URL
         sync: false # You'll set this in Render dashboard
