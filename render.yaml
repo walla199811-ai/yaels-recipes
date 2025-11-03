@@ -1,11 +1,11 @@
 services:
-  # Temporal Server (Free Plan - Web Service Only)
+  # Temporal Server + HTTP Health Check (Free Plan Web Service)
   - type: web
     name: yaels-recipes-temporal-server
     env: node
     plan: free
     buildCommand: npm install && curl -sSf https://temporal.download/cli.sh | sh && cp /opt/render/.temporalio/bin/temporal ./temporal
-    startCommand: ./temporal server start-dev --ip 0.0.0.0 --port 7233 --headless --metrics-port 0
+    startCommand: node -e "const http = require('http'); const { spawn } = require('child_process'); const server = http.createServer((req, res) => { res.writeHead(200, {'Content-Type': 'text/plain'}); res.end('Temporal Server Running'); }); server.listen(process.env.PORT || 3000, () => console.log('HTTP health server started')); spawn('./temporal', ['server', 'start-dev', '--ip', '0.0.0.0', '--port', '7233', '--headless'], { stdio: 'inherit' });"
     envVars:
       - key: NODE_ENV
         value: production
