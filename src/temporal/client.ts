@@ -9,8 +9,30 @@ export class TemporalRecipeClient {
       try {
         console.log('🔗 Connecting to Temporal server...')
         const { Connection } = await import('@temporalio/client')
+        // Parse the Temporal address and determine connection settings
+        let temporalAddress = process.env.TEMPORAL_ADDRESS || 'localhost:7234'
+
+        // Remove protocol if present (Render URLs include https://)
+        if (temporalAddress.startsWith('https://')) {
+          temporalAddress = temporalAddress.replace('https://', '')
+        }
+        if (temporalAddress.startsWith('http://')) {
+          temporalAddress = temporalAddress.replace('http://', '')
+        }
+
+        // Add default port if not specified
+        if (!temporalAddress.includes(':')) {
+          temporalAddress = `${temporalAddress}:7233`
+        }
+
+        // Determine if we need TLS (external servers use TLS, localhost does not)
+        const isLocalhost = temporalAddress.startsWith('localhost:') || temporalAddress.startsWith('127.0.0.1:')
+
+        console.log(`🔗 Connecting to Temporal at: ${temporalAddress} (TLS: ${!isLocalhost})`)
+
         const connection = await Connection.connect({
-          address: process.env.TEMPORAL_ADDRESS || 'localhost:7234',
+          address: temporalAddress,
+          tls: isLocalhost ? false : {},
         })
         this.client = new Client({
           connection,
