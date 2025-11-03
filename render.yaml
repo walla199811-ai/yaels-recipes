@@ -1,5 +1,5 @@
 services:
-  # Temporal Server
+  # Temporal Server (Free Plan - Web Service Only)
   - type: web
     name: yaels-recipes-temporal-server
     env: node
@@ -14,8 +14,8 @@ services:
       - key: TEMPORAL_UI_PORT
         value: 8080
 
-  # Temporal Worker
-  - type: worker
+  # Temporal Worker (Free Plan - Web Service with Worker Process)
+  - type: web
     name: yaels-recipes-temporal-worker
     env: node
     plan: free
