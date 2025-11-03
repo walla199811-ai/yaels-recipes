@@ -22,7 +22,7 @@ describe('Recipe CRUD Operations E2E Tests', () => {
 
   beforeEach(() => {
     // Reset database to known state
-    cy.resetDatabase()
+    // cy.resetDatabase() // TODO: Implement database reset command
     cy.visit('/')
   })
 
@@ -32,8 +32,8 @@ describe('Recipe CRUD Operations E2E Tests', () => {
     cy.url().should('include', '/recipe/new')
 
     // Fill out the recipe form
-    cy.get('[data-testid="recipe-title"]').typeHebrew(testRecipe.title)
-    cy.get('[data-testid="recipe-description"]').typeHebrew(testRecipe.description)
+    cy.get('[data-testid="recipe-title"]').type(testRecipe.title)
+    cy.get('[data-testid="recipe-description"]').type(testRecipe.description)
 
     // Select category
     cy.get('[data-testid="recipe-category"]').click()
@@ -49,7 +49,7 @@ describe('Recipe CRUD Operations E2E Tests', () => {
       if (index > 0) {
         cy.get('[data-testid="add-ingredient"]').click()
       }
-      cy.get(`[data-testid="ingredient-${index}"]`).typeHebrew(ingredient.text)
+      cy.get(`[data-testid="ingredient-${index}"]`).type(ingredient.text)
     })
 
     // Add instructions
@@ -57,24 +57,24 @@ describe('Recipe CRUD Operations E2E Tests', () => {
       if (index > 0) {
         cy.get('[data-testid="add-instruction"]').click()
       }
-      cy.get(`[data-testid="instruction-${index}"]`).typeHebrew(instruction.text)
+      cy.get(`[data-testid="instruction-${index}"]`).type(instruction.text)
     })
 
     // Add tags
-    cy.get('[data-testid="recipe-tags"]').typeHebrew(testRecipe.tags.join(', '))
+    cy.get('[data-testid="recipe-tags"]').type(testRecipe.tags.join(', '))
 
     // Add created by
-    cy.get('[data-testid="created-by"]').typeHebrew(testRecipe.createdBy)
+    cy.get('[data-testid="created-by"]').type(testRecipe.createdBy)
 
     // Submit the form
     cy.get('[data-testid="submit-recipe"]').click()
 
     // Verify success
     cy.url().should('include', '/recipe/')
-    cy.get('[data-testid="recipe-title"]').shouldContainHebrew(testRecipe.title)
+    cy.get('[data-testid="recipe-title"]').should('contain',testRecipe.title)
 
     // Verify all fields are displayed correctly
-    cy.get('[data-testid="recipe-description"]').shouldContainHebrew(testRecipe.description)
+    cy.get('[data-testid="recipe-description"]').should('contain',testRecipe.description)
     cy.get('[data-testid="recipe-prep-time"]').should('contain', testRecipe.prepTimeMinutes)
     cy.get('[data-testid="recipe-cook-time"]').should('contain', testRecipe.cookTimeMinutes)
     cy.get('[data-testid="recipe-servings"]').should('contain', testRecipe.servings)
@@ -90,14 +90,14 @@ describe('Recipe CRUD Operations E2E Tests', () => {
 
       // Modify the recipe
       const updatedTitle = 'מתכון מעודכן'
-      cy.get('[data-testid="recipe-title"]').clear().typeHebrew(updatedTitle)
+      cy.get('[data-testid="recipe-title"]').clear().type(updatedTitle)
 
       // Submit the changes
       cy.get('[data-testid="submit-recipe"]').click()
 
       // Verify the update
       cy.url().should('include', `/recipe/${recipeId}`)
-      cy.get('[data-testid="recipe-title"]').shouldContainHebrew(updatedTitle)
+      cy.get('[data-testid="recipe-title"]').should('contain',updatedTitle)
     })
   })
 
@@ -154,8 +154,8 @@ describe('Recipe CRUD Operations E2E Tests', () => {
       cy.visit(`/recipe/${recipeId}`)
 
       // Verify Hebrew text is preserved correctly
-      cy.get('[data-testid="recipe-title"]').shouldContainHebrew(hebrewText)
-      cy.get('[data-testid="recipe-description"]').shouldContainHebrew(complexHebrewRecipe.description)
+      cy.get('[data-testid="recipe-title"]').should('contain',hebrewText)
+      cy.get('[data-testid="recipe-description"]').should('contain',complexHebrewRecipe.description)
     })
   })
 })

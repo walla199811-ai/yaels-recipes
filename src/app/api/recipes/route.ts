@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { PrismaClient, RecipeCategory } from '@prisma/client'
-import { CreateRecipeInput, RecipeSearchFilters } from '@/types/recipe'
+import { CreateRecipeInput, RecipeSearchFilters, RecipeCategory as TypeRecipeCategory } from '@/types/recipe'
 import { RecipeService } from '@/services/recipe-service'
 import { z } from 'zod'
 
@@ -154,7 +154,10 @@ export async function POST(request: NextRequest) {
     const userEmail = request.headers.get('x-user-email') || process.env.NOTIFICATION_EMAILS?.split(',')[0]
 
     // Create new recipe using RecipeService (with Temporal workflow)
-    const newRecipe = await RecipeService.createRecipe(validatedData, userEmail)
+    const newRecipe = await RecipeService.createRecipe({
+      ...validatedData,
+      category: validatedData.category as TypeRecipeCategory
+    }, userEmail)
 
     return NextResponse.json(newRecipe, { status: 201 })
   } catch (error) {

@@ -27,7 +27,7 @@ export default function Home() {
   const availableTags = useMemo(() => {
     if (!recipesData?.recipes) return []
     const allTags = recipesData.recipes.flatMap(recipe => recipe.tags)
-    return [...new Set(allTags)].sort()
+    return Array.from(new Set(allTags)).sort()
   }, [recipesData?.recipes])
 
   return (

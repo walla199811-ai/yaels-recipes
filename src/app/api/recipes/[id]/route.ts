@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { temporalRecipeClient } from '@/temporal/client'
-import { UpdateRecipeInput } from '@/types/recipe'
+import { UpdateRecipeInput, RecipeCategory } from '@/types/recipe'
 import { z } from 'zod'
 
 const updateRecipeSchema = z.object({
@@ -59,6 +59,7 @@ export async function PUT(
     const updateInput: UpdateRecipeInput = {
       id: params.id,
       ...validatedData,
+      category: validatedData.category as RecipeCategory | undefined,
     }
 
     const recipe = await temporalRecipeClient.updateRecipe(updateInput)

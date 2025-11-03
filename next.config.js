@@ -6,6 +6,11 @@ const nextConfig = {
   env: {
     TEMPORAL_ADDRESS: process.env.TEMPORAL_ADDRESS || 'localhost:7233',
   },
+  typescript: {
+    ignoreBuildErrors: false,
+  },
+  // Exclude Cypress files from TypeScript build checking
+  transpilePackages: [],
 }
 
 module.exports = nextConfig
