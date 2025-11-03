@@ -249,6 +249,19 @@ PORT=3001 node start-combined-temporal.js
 - **Categories**: Enum with Hebrew names
 - **Tags**: String array for flexible tagging
 
+### Hidden UI Fields
+The application maintains certain fields in the database but hides them from the user interface:
+- **servings**: Set to indicative value `999` to show it's not real data
+- **createdBy**: Set to indicative value `"מתכון מדוגמה"` (Sample Recipe) to show it's not real data
+
+These fields are present in the database schema and backend logic but are not displayed in:
+- RecipeCard component display
+- RecipeForm input fields
+- Recipe detail page
+- Storybook stories (use indicative values consistently)
+
+**Rationale**: These fields are kept in the backend for potential future use while being hidden from the current UI to simplify the user experience.
+
 ### File Upload Handling
 - Images uploaded via Cloudinary
 - PhotoUpload component handles drag-and-drop
