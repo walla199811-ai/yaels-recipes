@@ -169,6 +169,15 @@ When creating new components:
 - Add RTL-specific styling when needed
 - Include Hebrew translations in `src/lib/translations.ts`
 
+#### Hebrew Ingredients Autocomplete
+The application includes a comprehensive Hebrew ingredients autocomplete system:
+- **Database**: `src/data/hebrew-ingredients.ts` - 300+ Hebrew ingredients in 14 categories
+- **Component**: `src/components/IngredientAutocomplete.tsx` - RTL Material-UI Autocomplete
+- **Integration**: Used in RecipeForm for ingredient input with freeSolo mode
+- **Categories**: דגנים וקמח, ירקות, פירות, בשר ועוף ודגים, חלב וביצים, קטניות ואגוזים, שמנים ושומנים, תבלינים ועשבי תיבול, מתקנים וסוכרים, שוקולד וחמרים מתוקים, חומרי אפייה, משקאות, רטבים וחומרי טעם, שימורים ומזון מעובד
+- **Features**: Smart search (exact matches first, then partial), categorized suggestions, allows custom ingredients
+- **Testing**: Storybook stories with Hebrew examples and interactive demonstrations
+
 ### Testing Hebrew Content
 - Use custom Cypress commands: `cy.typeHebrew()`, `cy.shouldContainHebrew()`
 - Test fixtures include authentic Hebrew recipes

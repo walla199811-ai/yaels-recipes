@@ -23,6 +23,7 @@ import { useForm, useFieldArray, Controller } from 'react-hook-form'
 import { RecipeCategory, CreateRecipeInput } from '@/types/recipe'
 import { translateCategory } from '@/lib/translations'
 import { PhotoUpload } from './PhotoUpload'
+import { IngredientAutocomplete } from './IngredientAutocomplete'
 
 interface RecipeFormProps {
   initialData?: CreateRecipeInput
@@ -326,13 +327,14 @@ export function RecipeForm({ initialData, onSubmit, onCancel, loading = false }:
                 control={control}
                 rules={{ required: index === 0 ? 'יש להוסיף לפחות מרכיב אחד' : false }}
                 render={({ field }) => (
-                  <TextField
-                    {...field}
-                    fullWidth
+                  <IngredientAutocomplete
+                    value={field.value}
+                    onChange={field.onChange}
                     placeholder="הוסף מרכיב..."
                     error={!!errors.ingredients?.[index]?.text}
                     helperText={errors.ingredients?.[index]?.text?.message}
                     disabled={loading}
+                    fullWidth
                   />
                 )}
               />
