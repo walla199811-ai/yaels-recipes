@@ -27,10 +27,12 @@ import {
   Delete,
   Schedule,
   Restaurant,
+  Print,
 } from '@mui/icons-material'
 import { Recipe } from '@/types/recipe'
 import { translateCategory } from '@/lib/translations'
 import { useDeleteRecipe } from '@/hooks/useRecipes'
+import { PrintStyles } from '@/components/PrintStyles'
 
 export default function RecipeDetailPage() {
   const params = useParams()
@@ -93,6 +95,10 @@ export default function RecipeDetailPage() {
     }
   }
 
+  const handlePrint = () => {
+    window.print()
+  }
+
   if (loading) {
     return (
       <Container maxWidth="lg">
@@ -119,20 +125,33 @@ export default function RecipeDetailPage() {
   }
 
   return (
-    <Container maxWidth="lg">
+    <Container maxWidth="lg" className="recipe-print-container">
+      <PrintStyles />
+      <Box sx={{ py: 4 }} className="print-header" style={{ display: 'none' }}>
+        מתכונים של יעל - {recipe.title}
+      </Box>
       <Box sx={{ py: 4 }}>
         {/* Header */}
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 3, gap: 2 }}>
-          <IconButton onClick={handleBack} size="large">
+          <IconButton onClick={handleBack} size="large" className="no-print">
             <ArrowBack />
           </IconButton>
-          <Typography variant="h4" component="h1" sx={{ flexGrow: 1 }}>
+          <Typography variant="h4" component="h1" sx={{ flexGrow: 1 }} className="recipe-title">
             {recipe.title}
           </Typography>
+          <Button
+            startIcon={<Print />}
+            variant="outlined"
+            onClick={handlePrint}
+            className="no-print"
+          >
+            הדפסה
+          </Button>
           <Button
             startIcon={<Edit />}
             variant="outlined"
             onClick={handleEdit}
+            className="no-print"
           >
             עריכה
           </Button>
@@ -141,6 +160,7 @@ export default function RecipeDetailPage() {
             variant="outlined"
             color="error"
             onClick={handleDelete}
+            className="no-print"
           >
             מחיקה
           </Button>
@@ -157,6 +177,7 @@ export default function RecipeDetailPage() {
                   image={recipe.photoUrl}
                   alt={recipe.title}
                   sx={{ objectFit: 'cover' }}
+                  className="recipe-image"
                 />
               </Card>
             ) : (
@@ -241,16 +262,16 @@ export default function RecipeDetailPage() {
         </Grid>
 
         {/* Ingredients and Instructions */}
-        <Grid container spacing={4} sx={{ mt: 2 }}>
+        <Grid container spacing={4} sx={{ mt: 2 }} className="ingredients-instructions-container">
           {/* Ingredients */}
-          <Grid item xs={12} md={6}>
+          <Grid item xs={12} md={6} className="ingredients-section">
             <Paper sx={{ p: 3 }}>
               <Typography variant="h5" gutterBottom>
                 מרכיבים
               </Typography>
-              <List>
+              <List className="recipe-list">
                 {recipe.ingredients.map((ingredient) => (
-                  <ListItem key={ingredient.order} sx={{ py: 0.5 }}>
+                  <ListItem key={ingredient.order} sx={{ py: 0.5 }} className="recipe-list-item">
                     <Avatar
                       sx={{
                         width: 24,
@@ -273,14 +294,14 @@ export default function RecipeDetailPage() {
           </Grid>
 
           {/* Instructions */}
-          <Grid item xs={12} md={6}>
+          <Grid item xs={12} md={6} className="instructions-section">
             <Paper sx={{ p: 3 }}>
               <Typography variant="h5" gutterBottom>
                 הוראות הכנה
               </Typography>
-              <List>
+              <List className="recipe-list">
                 {recipe.instructions.map((instruction) => (
-                  <ListItem key={instruction.step} sx={{ py: 1, alignItems: 'flex-start' }}>
+                  <ListItem key={instruction.step} sx={{ py: 1, alignItems: 'flex-start' }} className="recipe-list-item">
                     <Avatar
                       sx={{
                         width: 32,
