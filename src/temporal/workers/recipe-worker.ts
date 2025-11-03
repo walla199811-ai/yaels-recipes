@@ -30,11 +30,16 @@ async function run() {
 
   console.log('🔗 [WORKER] Attempting connection to:', finalAddress)
 
+  // Check if we're connecting to a secure port (443) - this indicates TLS should be used
+  const isSecure = finalAddress.includes(':443')
+  console.log('🔒 [WORKER] TLS connection:', isSecure ? 'enabled' : 'disabled')
+
   // Add connection timeout and retry logic
   try {
     connection = await Promise.race([
       NativeConnection.connect({
         address: finalAddress,
+        tls: isSecure ? {} : false, // Use TLS for secure connections (port 443), disable for local
       }),
       new Promise((_, reject) =>
         setTimeout(() => reject(new Error('Connection timeout after 30 seconds')), 30000)
@@ -50,6 +55,7 @@ async function run() {
     // Retry once more
     connection = await NativeConnection.connect({
       address: finalAddress,
+      tls: isSecure ? {} : false, // Use TLS for secure connections (port 443), disable for local
     })
   }
 

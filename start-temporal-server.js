@@ -1,28 +1,18 @@
 #!/usr/bin/env node
 
-const http = require('http');
 const { spawn } = require('child_process');
 
-console.log('🚀 Starting Temporal server with HTTP wrapper...');
+console.log('🚀 Starting Temporal server directly on HTTP port...');
 
-// Start HTTP health check server
-const server = http.createServer((req, res) => {
-  res.writeHead(200, {'Content-Type': 'text/plain'});
-  res.end('Temporal Server Running\n');
-});
-
+// Start Temporal server directly on the HTTP port (the only externally accessible port)
 const port = process.env.PORT || 3000;
-server.listen(port, () => {
-  console.log(`✅ HTTP health server started on port ${port}`);
-});
+console.log(`🔧 Temporal server will use port: ${port}`);
 
-// Start Temporal server in background on a different port
-console.log('🔧 Starting Temporal server...');
 const temporal = spawn('./temporal', [
   'server',
   'start-dev',
   '--ip', '0.0.0.0',
-  '--port', '7234',
+  '--port', port,
   '--headless'
 ], {
   stdio: 'inherit'
