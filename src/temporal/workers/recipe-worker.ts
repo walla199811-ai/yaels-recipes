@@ -20,8 +20,17 @@ async function run() {
 
   // Always connect to self-hosted Temporal server (no Cloud needed)
   console.log('🔗 [WORKER] Connecting to self-hosted Temporal server...')
+
+  // In production, TEMPORAL_ADDRESS should be the full URL with port
+  // In development, default to localhost
+  const temporalAddress = process.env.TEMPORAL_ADDRESS || 'localhost:7234'
+
+  // If we have a host without port, add the default port
+  const finalAddress = temporalAddress.includes(':') ? temporalAddress : `${temporalAddress}:7233`
+
+  console.log('🔗 [WORKER] Attempting connection to:', finalAddress)
   connection = await NativeConnection.connect({
-    address: process.env.TEMPORAL_ADDRESS || 'localhost:7234',
+    address: finalAddress,
   })
 
   // Create a Worker with the Task Queue name from the client
