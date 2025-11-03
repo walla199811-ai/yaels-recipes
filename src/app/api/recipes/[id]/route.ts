@@ -26,8 +26,8 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const recipes = await temporalRecipeClient.getRecipes()
-    const recipe = recipes.find(r => r.id === params.id)
+    const recipes = await temporalRecipeClient.getRecipes({ id: params.id })
+    const recipe = recipes.length > 0 ? recipes[0] : null
 
     if (!recipe) {
       return NextResponse.json(

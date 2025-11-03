@@ -2,7 +2,7 @@
   "sampleRecipe": {
     "title": "עוגת שוקולד של סבתא",
     "description": "מתכון משפחתי לעוגת שוקולד עשירה וטעימה",
-    "category": "קינוחים",
+    "category": "DESSERT",
     "prepTimeMinutes": 30,
     "cookTimeMinutes": 60,
     "servings": 12,
@@ -33,7 +33,7 @@
   "mainDishRecipe": {
     "title": "שניצל עוף בתנור",
     "description": "שניצל עוף פריך ובריא שנאפה בתנור במקום לטגן",
-    "category": "עיקריות",
+    "category": "MAIN",
     "prepTimeMinutes": 20,
     "cookTimeMinutes": 25,
     "servings": 4,
@@ -60,7 +60,7 @@
   "vegetarianRecipe": {
     "title": "סלט קינואה עם ירקות",
     "description": "סלט בריא ומזין עם קינואה וירקות צבעוניים",
-    "category": "סלטים",
+    "category": "SIDE",
     "prepTimeMinutes": 15,
     "cookTimeMinutes": 15,
     "servings": 6,

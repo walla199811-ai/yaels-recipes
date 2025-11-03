@@ -56,6 +56,7 @@ export interface UpdateRecipeInput extends Partial<CreateRecipeInput> {
 }
 
 export interface RecipeSearchFilters {
+  id?: string;
   query?: string;
   category?: RecipeCategory;
   tags?: string[];

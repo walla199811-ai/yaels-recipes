@@ -2,7 +2,7 @@ import { proxyActivities } from '@temporalio/workflow'
 import type * as activities from '../activities/recipe-activities'
 
 // Configure activity timeouts
-const { createRecipe, updateRecipe, deleteRecipe, sendNotificationEmail } = proxyActivities<typeof activities>({
+const { createRecipe, updateRecipe, deleteRecipe, getRecipes, sendNotificationEmail } = proxyActivities<typeof activities>({
   startToCloseTimeout: '1 minute',
   retry: {
     maximumAttempts: 3,
@@ -84,4 +84,34 @@ export async function recipeWorkflow(input: RecipeWorkflowInput): Promise<any> {
     console.error(`Recipe workflow failed for operation ${input.operation}:`, error)
     throw error
   }
+}
+
+// Individual workflow functions that the client expects
+export async function getRecipesWorkflow(filters?: any): Promise<any[]> {
+  return await getRecipes(filters)
+}
+
+export async function createRecipeWorkflow(recipeData: any): Promise<any> {
+  return await recipeWorkflow({
+    operation: 'create',
+    recipeData,
+    userEmail: recipeData.createdBy
+  })
+}
+
+export async function updateRecipeWorkflow(recipeData: any): Promise<any> {
+  return await recipeWorkflow({
+    operation: 'update',
+    recipeId: recipeData.id,
+    recipeData,
+    userEmail: recipeData.lastModifiedBy
+  })
+}
+
+export async function deleteRecipeWorkflow(recipeId: string, deletedBy: string): Promise<void> {
+  await recipeWorkflow({
+    operation: 'delete',
+    recipeId,
+    userEmail: deletedBy
+  })
 }

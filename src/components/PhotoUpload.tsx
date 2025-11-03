@@ -42,7 +42,7 @@ export function PhotoUpload({
   const [preview, setPreview] = useState<string | null>(value || null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const validateFile = (file: File): string | null => {
+  const validateFile = useCallback((file: File): string | null => {
     if (!acceptedFormats.includes(file.type)) {
       return `סוג קובץ לא נתמך. אנא בחרו: ${acceptedFormats.map(f => f.split('/')[1]).join(', ')}`
     }
@@ -52,9 +52,9 @@ export function PhotoUpload({
     }
 
     return null
-  }
+  }, [acceptedFormats, maxSizeMB])
 
-  const processFile = async (file: File) => {
+  const processFile = useCallback(async (file: File) => {
     const validationError = validateFile(file)
     if (validationError) {
       setError(validationError)
@@ -92,7 +92,7 @@ export function PhotoUpload({
     } finally {
       setUploading(false)
     }
-  }
+  }, [validateFile, onChange])
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -109,7 +109,7 @@ export function PhotoUpload({
     if (file) {
       processFile(file)
     }
-  }, [])
+  }, [processFile])
 
   const handleDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault()

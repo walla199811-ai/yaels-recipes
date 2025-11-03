@@ -107,6 +107,7 @@ export default function Home() {
         color="primary"
         aria-label="הוסף מתכון"
         onClick={() => router.push('/recipe/add')}
+        data-testid="add-recipe-button"
         sx={{
           position: 'fixed',
           bottom: 24,

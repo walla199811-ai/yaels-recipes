@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { PrismaClient, RecipeCategory } from '@prisma/client'
 import { CreateRecipeInput, RecipeSearchFilters, RecipeCategory as TypeRecipeCategory } from '@/types/recipe'
-import { RecipeService } from '@/services/recipe-service'
+import { temporalRecipeClient } from '@/temporal/client'
 import { z } from 'zod'
-
-const prisma = new PrismaClient()
 
 const createRecipeSchema = z.object({
   title: z.string().min(1, 'Title is required'),
@@ -31,20 +28,12 @@ export async function GET(request: NextRequest) {
     // Check if requesting a specific recipe by ID
     const id = searchParams.get('id')
     if (id) {
-      const recipe = await prisma.recipe.findUnique({
-        where: { id }
-      })
+      const recipes = await temporalRecipeClient.getRecipes({ id })
+      const recipe = recipes.length > 0 ? recipes[0] : null
 
       if (recipe) {
-        // Transform Prisma result to match our frontend types
-        const transformedRecipe = {
-          ...recipe,
-          ingredients: recipe.ingredients as Array<{ order: number; text: string }>,
-          instructions: recipe.instructions as Array<{ step: number; text: string }>
-        }
-
         return NextResponse.json({
-          recipes: [transformedRecipe],
+          recipes: [recipe],
           totalCount: 1
         })
       } else {
@@ -55,84 +44,45 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Build the where clause for filtering
-    const where: any = {}
+    // Build filters object from search parameters
+    const filters: RecipeSearchFilters = {}
 
     // Apply query filter (search in title, description, and tags)
     const query = searchParams.get('query')
     if (query) {
-      where.OR = [
-        {
-          title: {
-            contains: query,
-            mode: 'insensitive'
-          }
-        },
-        {
-          description: {
-            contains: query,
-            mode: 'insensitive'
-          }
-        },
-        {
-          tags: {
-            hasSome: [query]
-          }
-        }
-      ]
+      filters.query = query
     }
 
     // Apply category filter
     const category = searchParams.get('category')
     if (category) {
-      where.category = category as RecipeCategory
+      filters.category = category as TypeRecipeCategory
     }
 
     // Apply tags filter
     const tags = searchParams.get('tags')
     if (tags) {
-      const selectedTags = tags.split(',')
-      where.tags = {
-        hasSome: selectedTags
-      }
+      filters.tags = tags.split(',')
     }
 
     // Apply prep time filter
     const maxPrepTime = searchParams.get('maxPrepTime')
     if (maxPrepTime) {
-      const maxTime = parseInt(maxPrepTime)
-      where.prepTimeMinutes = {
-        lte: maxTime
-      }
+      filters.maxPrepTime = parseInt(maxPrepTime)
     }
 
     // Apply cook time filter
     const maxCookTime = searchParams.get('maxCookTime')
     if (maxCookTime) {
-      const maxTime = parseInt(maxCookTime)
-      where.cookTimeMinutes = {
-        lte: maxTime
-      }
+      filters.maxCookTime = parseInt(maxCookTime)
     }
 
-    // Fetch recipes from database
-    const recipes = await prisma.recipe.findMany({
-      where,
-      orderBy: {
-        createdAt: 'desc'
-      }
-    })
-
-    // Transform Prisma results to match our frontend types
-    const transformedRecipes = recipes.map(recipe => ({
-      ...recipe,
-      ingredients: recipe.ingredients as Array<{ order: number; text: string }>,
-      instructions: recipe.instructions as Array<{ step: number; text: string }>
-    }))
+    // Fetch recipes using Temporal client
+    const recipes = await temporalRecipeClient.getRecipes(filters)
 
     return NextResponse.json({
-      recipes: transformedRecipes,
-      totalCount: transformedRecipes.length
+      recipes,
+      totalCount: recipes.length
     })
   } catch (error) {
     console.error('Failed to fetch recipes:', error)
@@ -151,13 +101,13 @@ export async function POST(request: NextRequest) {
     const validatedData = createRecipeSchema.parse(body)
 
     // Extract user email from headers (if available) for notifications
-    const userEmail = request.headers.get('x-user-email') || process.env.NOTIFICATION_EMAILS?.split(',')[0]
+    const userEmail = request.headers.get('x-user-email') || 'Unknown User'
 
-    // Create new recipe using RecipeService (with Temporal workflow)
-    const newRecipe = await RecipeService.createRecipe({
+    // Create new recipe using Temporal client
+    const newRecipe = await temporalRecipeClient.createRecipe({
       ...validatedData,
       category: validatedData.category as TypeRecipeCategory
-    }, userEmail)
+    })
 
     return NextResponse.json(newRecipe, { status: 201 })
   } catch (error) {
@@ -191,10 +141,14 @@ export async function PUT(request: NextRequest) {
     }
 
     // Extract user email from headers (if available) for notifications
-    const userEmail = request.headers.get('x-user-email') || process.env.NOTIFICATION_EMAILS?.split(',')[0]
+    const userEmail = request.headers.get('x-user-email') || 'Unknown User'
 
-    // Update recipe using RecipeService (with Temporal workflow)
-    const updatedRecipe = await RecipeService.updateRecipe(id, updateData, userEmail)
+    // Update recipe using Temporal client
+    const updatedRecipe = await temporalRecipeClient.updateRecipe({
+      id,
+      ...updateData,
+      lastModifiedBy: userEmail
+    })
 
     return NextResponse.json(updatedRecipe)
   } catch (error) {
@@ -220,10 +174,10 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Extract user email from headers (if available) for notifications
-    const userEmail = request.headers.get('x-user-email') || process.env.NOTIFICATION_EMAILS?.split(',')[0]
+    const userEmail = request.headers.get('x-user-email') || 'Unknown User'
 
-    // Delete recipe using RecipeService (with Temporal workflow)
-    await RecipeService.deleteRecipe(id, userEmail)
+    // Delete recipe using Temporal client
+    await temporalRecipeClient.deleteRecipe(id, userEmail)
 
     return NextResponse.json({ message: 'Recipe deleted successfully' })
   } catch (error: any) {

@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react'
 import { action } from '@storybook/addon-actions'
 import { RecipeCard } from './RecipeCard'
-import { Recipe } from '@/types/recipe'
+import { Recipe, RecipeCategory } from '@/types/recipe'
 
 const meta = {
   title: 'Components/RecipeCard',
@@ -34,7 +34,7 @@ const baseRecipe: Recipe = {
   id: '1',
   title: 'עוגת שוקולד של סבתא',
   description: 'מתכון משפחתי לעוגת שוקולד עשירה וטעימה, עם קרם שוקולד מעולה וקישוט פירות יער',
-  category: 'קינוחים',
+  category: RecipeCategory.DESSERT,
   prepTimeMinutes: 30,
   cookTimeMinutes: 60,
   servings: 12,
@@ -68,7 +68,7 @@ export const WithoutImage: Story = {
   args: {
     recipe: {
       ...baseRecipe,
-      photoUrl: null,
+      photoUrl: undefined,
     },
     onClick: action('recipe-clicked'),
   },
@@ -89,7 +89,7 @@ export const MainDish: Story = {
       id: '2',
       title: 'שניצל עוף בתנור',
       description: 'שניצל עוף פריך ובריא שנאפה בתנור במקום לטגן',
-      category: 'עיקריות',
+      category: RecipeCategory.MAIN,
       prepTimeMinutes: 20,
       cookTimeMinutes: 25,
       servings: 4,
@@ -116,7 +116,7 @@ export const VegetarianSalad: Story = {
       id: '3',
       title: 'סלט קינואה עם ירקות',
       description: 'סלט בריא ומזין עם קינואה וירקות צבעוניים',
-      category: 'סלטים',
+      category: RecipeCategory.SIDE,
       prepTimeMinutes: 15,
       cookTimeMinutes: 15,
       servings: 6,
@@ -164,7 +164,7 @@ export const QuickRecipe: Story = {
       id: '5',
       title: 'סמוזי בננה',
       description: 'משקה בריא ומהיר להכנה',
-      category: 'משקאות',
+      category: RecipeCategory.BEVERAGE,
       prepTimeMinutes: 5,
       cookTimeMinutes: 0,
       servings: 2,
@@ -191,12 +191,12 @@ export const LargeServings: Story = {
       id: '6',
       title: 'אורז למסיבה',
       description: 'מתכון אורז לאירועים גדולים',
-      category: 'תוספות',
+      category: RecipeCategory.SIDE,
       prepTimeMinutes: 10,
       cookTimeMinutes: 45,
       servings: 25,
       tags: ['למסיבה', 'פרווה', 'כשר'],
-      photoUrl: null,
+      photoUrl: undefined,
       createdBy: 'השף של האירועים',
     },
     onClick: action('recipe-clicked'),

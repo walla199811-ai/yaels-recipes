@@ -12,7 +12,7 @@ cloudinary.config({
 
 // Configure email transporter
 const createEmailTransporter = () => {
-  return nodemailer.createTransporter({
+  return nodemailer.createTransport({
     host: process.env.EMAIL_HOST,
     port: parseInt(process.env.EMAIL_PORT || '587'),
     secure: false,
@@ -29,11 +29,15 @@ export async function validateRecipeData(input: CreateRecipeInput | UpdateRecipe
     throw new Error('Recipe title is required')
   }
 
-  if (input.prepTimeMinutes < 0 || input.cookTimeMinutes < 0) {
-    throw new Error('Preparation and cooking times must be positive numbers')
+  if (input.prepTimeMinutes !== undefined && input.prepTimeMinutes < 0) {
+    throw new Error('Preparation time must be a positive number')
   }
 
-  if (input.servings <= 0) {
+  if (input.cookTimeMinutes !== undefined && input.cookTimeMinutes < 0) {
+    throw new Error('Cooking time must be a positive number')
+  }
+
+  if (input.servings !== undefined && input.servings <= 0) {
     throw new Error('Number of servings must be greater than 0')
   }
 
@@ -81,6 +85,9 @@ export async function fetchRecipesFromDB(filters?: RecipeSearchFilters): Promise
 
   return recipes.map(recipe => ({
     ...recipe,
+    description: recipe.description || undefined,
+    photoUrl: recipe.photoUrl || undefined,
+    category: recipe.category as any,
     ingredients: recipe.ingredients as any,
     instructions: recipe.instructions as any,
   }))
@@ -101,6 +108,7 @@ export async function saveRecipeToDB(input: CreateRecipeInput): Promise<Recipe> 
   const recipe = await prisma.recipe.create({
     data: {
       ...input,
+      lastModifiedBy: input.createdBy,
       ingredients: processedIngredients,
       instructions: processedInstructions,
     },

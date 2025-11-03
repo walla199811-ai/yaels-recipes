@@ -92,6 +92,7 @@ export function RecipeFilters({ filters, onChange, availableTags }: RecipeFilter
                 value={filters.category || ''}
                 label="קטגוריה"
                 onChange={(e) => handleCategoryChange(e.target.value as RecipeCategory | '')}
+                data-testid="category-filter"
               >
                 <MenuItem value="">
                   <em>כל הקטגוריות</em>

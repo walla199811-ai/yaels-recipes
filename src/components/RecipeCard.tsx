@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import Image from 'next/image'
 import {
   Card,
   CardContent,
@@ -27,15 +28,13 @@ export function RecipeCard({ recipe, onClick }: RecipeCardProps) {
       <CardActionArea onClick={onClick} sx={{ flexGrow: 1 }}>
         <Box sx={{ height: 200, overflow: 'hidden', position: 'relative' }}>
           {recipe.photoUrl ? (
-            <img
+            <Image
               src={recipe.photoUrl}
               alt={recipe.title}
               data-testid="recipe-image"
+              fill
               style={{
-                width: '100%',
-                height: '100%',
                 objectFit: 'cover',
-                display: 'block'
               }}
               onError={(e) => {
                 // Fallback to placeholder if image fails to load
@@ -43,16 +42,7 @@ export function RecipeCard({ recipe, onClick }: RecipeCardProps) {
                 target.style.display = 'none';
               }}
             />
-          ) : (
-            <img
-              src="/placeholder-recipe.jpg"
-              alt="מתכון ללא תמונה"
-              data-testid="recipe-image"
-              style={{
-                display: 'none'
-              }}
-            />
-          )}
+          ) : null}
 
           {/* Always show placeholder if no image or image failed to load */}
           {!recipe.photoUrl && (

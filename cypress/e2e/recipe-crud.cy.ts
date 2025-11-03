@@ -2,7 +2,7 @@ describe('Recipe CRUD Operations E2E Tests', () => {
   const testRecipe = {
     title: 'מתכון בדיקה',
     description: 'זהו מתכון לבדיקה של המערכת',
-    category: 'קינוחים',
+    category: 'DESSERT',
     prepTimeMinutes: 30,
     cookTimeMinutes: 45,
     servings: 6,

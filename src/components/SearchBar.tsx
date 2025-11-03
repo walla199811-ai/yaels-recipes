@@ -43,6 +43,7 @@ export function SearchBar({ value, onChange, placeholder = 'חפש מתכוני�
         onKeyPress={handleKeyPress}
         placeholder={placeholder}
         variant="outlined"
+        data-testid="search-input"
         InputProps={{
           endAdornment: (
             <InputAdornment position="end">

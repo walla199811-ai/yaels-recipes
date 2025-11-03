@@ -221,3 +221,63 @@ export async function sendNotificationEmail(emailData: NotificationEmailInput): 
     return { success: false, error: errorMessage }
   }
 }
+
+/**
+ * Get recipes from the database with optional filters
+ */
+export async function getRecipes(filters?: any): Promise<any[]> {
+  try {
+    console.log('Getting recipes via Temporal activity with filters:', filters)
+
+    // Build the where clause based on filters
+    const where: any = {}
+
+    if (filters?.id) {
+      where.id = filters.id
+    }
+
+    if (filters?.query) {
+      where.OR = [
+        { title: { contains: filters.query, mode: 'insensitive' } },
+        { description: { contains: filters.query, mode: 'insensitive' } },
+        { ingredients: { some: { text: { contains: filters.query, mode: 'insensitive' } } } }
+      ]
+    }
+
+    if (filters?.category) {
+      where.category = filters.category
+    }
+
+    if (filters?.tags && filters.tags.length > 0) {
+      where.tags = { hasSome: filters.tags }
+    }
+
+    if (filters?.maxPrepTime) {
+      where.prepTimeMinutes = { lte: filters.maxPrepTime }
+    }
+
+    if (filters?.maxCookTime) {
+      where.cookTimeMinutes = { lte: filters.maxCookTime }
+    }
+
+    const recipes = await prisma.recipe.findMany({
+      where,
+      orderBy: { createdAt: 'desc' }
+    })
+
+    console.log(`Found ${recipes.length} recipes via Temporal activity`)
+
+    return recipes.map(recipe => ({
+      ...recipe,
+      ingredients: Array.isArray(recipe.ingredients)
+        ? recipe.ingredients.sort((a: any, b: any) => a.order - b.order)
+        : recipe.ingredients,
+      instructions: Array.isArray(recipe.instructions)
+        ? recipe.instructions.sort((a: any, b: any) => a.step - b.step)
+        : recipe.instructions
+    }))
+  } catch (error) {
+    console.error('Failed to get recipes via Temporal:', error)
+    throw new Error(`Failed to get recipes: ${error instanceof Error ? error.message : String(error)}`)
+  }
+}
