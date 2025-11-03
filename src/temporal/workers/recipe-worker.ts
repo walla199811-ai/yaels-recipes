@@ -31,6 +31,7 @@ async function run() {
   console.log('🔗 [WORKER] Attempting connection to:', finalAddress)
 
   // Check if we're connecting to a secure port (443) - this indicates TLS should be used
+  // Port 80 is HTTP (no TLS), port 443 is HTTPS (with TLS)
   const isSecure = finalAddress.includes(':443')
   console.log('🔒 [WORKER] TLS connection:', isSecure ? 'enabled' : 'disabled')
 

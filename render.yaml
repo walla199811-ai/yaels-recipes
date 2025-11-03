@@ -21,7 +21,7 @@ services:
       - key: NODE_ENV
         value: production
       - key: TEMPORAL_ADDRESS
-        value: yaels-recipes-temporal-server.onrender.com:443
+        value: yaels-recipes-temporal-server.onrender.com:80
       # Add your environment variables here
       - key: DATABASE_URL
         sync: false # You'll set this in Render dashboard
