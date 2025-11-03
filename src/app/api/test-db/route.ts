@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
 export async function GET() {
+  // Force rebuild - debug version v2
   console.log('🔍 [TEST-DB] Test endpoint called at:', new Date().toISOString())
   console.log('🔍 [TEST-DB] Environment:', process.env.NODE_ENV)
   console.log('🔍 [TEST-DB] Database URL exists:', !!process.env.DATABASE_URL)
