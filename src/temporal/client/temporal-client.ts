@@ -24,7 +24,6 @@ export async function getTemporalClient(): Promise<Client> {
       connection = await Connection.connect({
         address: process.env.TEMPORAL_ADDRESS || 'localhost:7234',
         connectTimeout: '10s',
-        callTimeout: '30s',
       })
 
       client = new Client({

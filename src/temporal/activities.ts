@@ -116,6 +116,9 @@ export async function saveRecipeToDB(input: CreateRecipeInput): Promise<Recipe> 
 
   return {
     ...recipe,
+    description: recipe.description || undefined,
+    photoUrl: recipe.photoUrl || undefined,
+    category: recipe.category as any,
     ingredients: recipe.ingredients as any,
     instructions: recipe.instructions as any,
   }
@@ -148,6 +151,9 @@ export async function updateRecipeInDB(input: UpdateRecipeInput): Promise<Recipe
 
   return {
     ...recipe,
+    description: recipe.description || undefined,
+    photoUrl: recipe.photoUrl || undefined,
+    category: recipe.category as any,
     ingredients: recipe.ingredients as any,
     instructions: recipe.instructions as any,
   }
