@@ -111,13 +111,6 @@ export function RecipeCard({ recipe, onClick }: RecipeCardProps) {
                 {totalTime} דק׳
               </Typography>
             </Box>
-
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <Restaurant fontSize="small" color="action" />
-              <Typography variant="body2" color="text.secondary" data-testid="servings">
-                {recipe.servings} מנות
-              </Typography>
-            </Box>
           </Box>
 
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 1 }} data-testid="recipe-tags">
@@ -138,9 +131,6 @@ export function RecipeCard({ recipe, onClick }: RecipeCardProps) {
             ))}
           </Box>
 
-          <Typography variant="caption" color="text.secondary" data-testid="created-by">
-            מאת {recipe.createdBy}
-          </Typography>
         </CardContent>
       </CardActionArea>
     </Card>

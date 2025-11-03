@@ -27,8 +27,6 @@ import {
   Delete,
   Schedule,
   Restaurant,
-  Person,
-  DateRange,
 } from '@mui/icons-material'
 import { Recipe } from '@/types/recipe'
 import { translateCategory } from '@/lib/translations'
@@ -215,18 +213,6 @@ export default function RecipeDetailPage() {
                     <Schedule color="primary" />
                     <Typography>
                       זמן בישול: {recipe.cookTimeMinutes} דקות
-                    </Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <Person color="primary" />
-                    <Typography>
-                      מספר מנות: {recipe.servings}
-                    </Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <DateRange color="primary" />
-                    <Typography>
-                      נוצר על ידי: {recipe.createdBy}
                     </Typography>
                   </Box>
                 </Box>

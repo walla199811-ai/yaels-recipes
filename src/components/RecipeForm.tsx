@@ -53,11 +53,11 @@ export function RecipeForm({ initialData, onSubmit, onCancel, loading = false }:
       category: initialData?.category || RecipeCategory.MAIN,
       prepTimeMinutes: initialData?.prepTimeMinutes || 15,
       cookTimeMinutes: initialData?.cookTimeMinutes || 30,
-      servings: initialData?.servings || 4,
+      servings: initialData?.servings || 999, // Hidden field with indicative value
       ingredients: initialData?.ingredients || [{ text: '' }],
       instructions: initialData?.instructions || [{ text: '' }],
       photoUrl: initialData?.photoUrl || '',
-      createdBy: initialData?.createdBy || '',
+      createdBy: initialData?.createdBy || 'מתכון מדוגמה', // Hidden field with indicative value
     }
   })
 
@@ -163,7 +163,7 @@ export function RecipeForm({ initialData, onSubmit, onCancel, loading = false }:
             />
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid item xs={12} sm={4}>
             <Controller
               name="category"
               control={control}
@@ -182,25 +182,7 @@ export function RecipeForm({ initialData, onSubmit, onCancel, loading = false }:
             />
           </Grid>
 
-          <Grid item xs={12} sm={6}>
-            <Controller
-              name="createdBy"
-              control={control}
-              rules={{ required: 'שם המבשל חובה' }}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  fullWidth
-                  label="נוצר על ידי"
-                  error={!!errors.createdBy}
-                  helperText={errors.createdBy?.message}
-                  disabled={loading}
-                />
-              )}
-            />
-          </Grid>
-
-          <Grid item xs={4}>
+          <Grid item xs={12} sm={4}>
             <Controller
               name="prepTimeMinutes"
               control={control}
@@ -219,7 +201,7 @@ export function RecipeForm({ initialData, onSubmit, onCancel, loading = false }:
             />
           </Grid>
 
-          <Grid item xs={4}>
+          <Grid item xs={12} sm={4}>
             <Controller
               name="cookTimeMinutes"
               control={control}
@@ -238,24 +220,6 @@ export function RecipeForm({ initialData, onSubmit, onCancel, loading = false }:
             />
           </Grid>
 
-          <Grid item xs={4}>
-            <Controller
-              name="servings"
-              control={control}
-              rules={{ required: 'מספר מנות חובה', min: { value: 1, message: 'מספר מנות חייב להיות חיובי' } }}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  fullWidth
-                  label="מספר מנות"
-                  type="number"
-                  error={!!errors.servings}
-                  helperText={errors.servings?.message}
-                  disabled={loading}
-                />
-              )}
-            />
-          </Grid>
         </Grid>
 
         <Divider sx={{ my: 4 }} />
