@@ -22,15 +22,29 @@ const createRecipeSchema = z.object({
 })
 
 export async function GET(request: NextRequest) {
+  console.log('🔍 [RECIPES API] GET request started at:', new Date().toISOString())
+  console.log('🔍 [RECIPES API] Request URL:', request.url)
+  console.log('🔍 [RECIPES API] Environment:', process.env.NODE_ENV)
+  console.log('🔍 [RECIPES API] Database URL exists:', !!process.env.DATABASE_URL)
+
   try {
     const { searchParams } = new URL(request.url)
+    console.log('🔍 [RECIPES API] Search params:', Object.fromEntries(searchParams.entries()))
 
     // Check if requesting a specific recipe by ID
     const id = searchParams.get('id')
     if (id) {
+      console.log('🔍 [RECIPES API] Fetching single recipe by ID:', id)
+      console.log('🔍 [RECIPES API] About to call prisma.recipe.findUnique')
+
       const recipe = await prisma.recipe.findUnique({
         where: { id }
       })
+
+      console.log('🔍 [RECIPES API] Recipe found:', !!recipe)
+      if (recipe) {
+        console.log('🔍 [RECIPES API] Recipe title:', recipe.title)
+      }
 
       if (recipe) {
         const formattedRecipe = {
@@ -96,10 +110,18 @@ export async function GET(request: NextRequest) {
     }
 
     // Fetch recipes from database
+    console.log('🔍 [RECIPES API] About to fetch recipes with where clause:', where)
+    console.log('🔍 [RECIPES API] About to call prisma.recipe.findMany')
+
     const recipes = await prisma.recipe.findMany({
       where,
       orderBy: { createdAt: 'desc' }
     })
+
+    console.log('🔍 [RECIPES API] Found recipes count:', recipes.length)
+    if (recipes.length > 0) {
+      console.log('🔍 [RECIPES API] First recipe title:', recipes[0].title)
+    }
 
     // Format recipes to match expected interface
     const formattedRecipes = recipes.map(recipe => ({
@@ -120,17 +142,36 @@ export async function GET(request: NextRequest) {
       totalCount: formattedRecipes.length
     })
   } catch (error) {
-    console.error('Failed to fetch recipes:', error)
+    console.error('❌ [RECIPES API] Error occurred:', error)
+    console.error('❌ [RECIPES API] Error type:', typeof error)
+    console.error('❌ [RECIPES API] Error name:', error instanceof Error ? error.name : 'Unknown')
+    console.error('❌ [RECIPES API] Error message:', error instanceof Error ? error.message : String(error))
+    console.error('❌ [RECIPES API] Error stack:', error instanceof Error ? error.stack : 'No stack')
+
+    // Log additional context
+    console.error('❌ [RECIPES API] Database URL configured:', !!process.env.DATABASE_URL)
+    console.error('❌ [RECIPES API] Environment:', process.env.NODE_ENV)
+
     return NextResponse.json(
-      { error: 'Failed to fetch recipes' },
+      {
+        error: 'Failed to fetch recipes',
+        details: error instanceof Error ? error.message : String(error),
+        timestamp: new Date().toISOString()
+      },
       { status: 500 }
     )
   }
 }
 
 export async function POST(request: NextRequest) {
+  console.log('🔍 [RECIPES API] POST request started at:', new Date().toISOString())
+  console.log('🔍 [RECIPES API] Environment:', process.env.NODE_ENV)
+  console.log('🔍 [RECIPES API] Database URL exists:', !!process.env.DATABASE_URL)
+
   try {
+    console.log('🔍 [RECIPES API] About to parse request body')
     const body = await request.json()
+    console.log('🔍 [RECIPES API] Request body parsed, title:', body?.title)
 
     // Validate the input
     const validatedData = createRecipeSchema.parse(body)
@@ -152,6 +193,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Create recipe in database
+    console.log('🔍 [RECIPES API] About to create recipe in database')
+    console.log('🔍 [RECIPES API] Validated data keys:', Object.keys(validatedData))
+
     const newRecipe = await prisma.recipe.create({
       data: {
         title: validatedData.title,
