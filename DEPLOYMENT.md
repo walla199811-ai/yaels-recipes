@@ -5,10 +5,11 @@ This guide covers deploying the Yael's Recipes application to production using f
 ## Architecture Overview
 
 - **Frontend & API**: Vercel (Next.js)
-- **Database**: Neon PostgreSQL (Free tier: 512MB)
+- **Database**: Neon PostgreSQL (Free tier: 3GB)
 - **Images**: Cloudinary (Free tier: 25GB)
 - **Email**: Gmail SMTP (Free)
-- **Temporal**: Temporal Cloud (Free tier: 1000 actions/month)
+- **Temporal Server**: Railway (Free tier: $5/month credit)
+- **Temporal Worker**: Railway (Free tier: $5/month credit)
 
 ## Prerequisites
 
@@ -16,7 +17,7 @@ This guide covers deploying the Yael's Recipes application to production using f
 2. Vercel account (sign up with GitHub)
 3. Neon account (PostgreSQL)
 4. Cloudinary account
-5. Temporal Cloud account
+5. Railway account (for Temporal server and worker)
 
 ## Step 1: Database Setup (Neon PostgreSQL)
 
@@ -53,11 +54,9 @@ CLOUDINARY_CLOUD_NAME="your-cloud-name"
 CLOUDINARY_API_KEY="your-api-key"
 CLOUDINARY_API_SECRET="your-api-secret"
 
-# Temporal Cloud
-TEMPORAL_ADDRESS="your-namespace.a2dd6.tmprl.cloud:7233"
-TEMPORAL_NAMESPACE="your-namespace.a2dd6"
-TEMPORAL_CLIENT_CERT_PATH=""  # Temporal Cloud provides these via web UI
-TEMPORAL_CLIENT_KEY_PATH=""   # For production, use base64 encoded certs
+# Temporal Server (Self-hosted on Railway)
+TEMPORAL_ADDRESS="your-railway-temporal-server.railway.app:7233"
+TEMPORAL_NAMESPACE="default"
 ```
 
 ## Step 2: Cloudinary Setup
@@ -171,7 +170,7 @@ In Vercel dashboard → Settings → Environment Variables, add:
 - `CLOUDINARY_API_KEY`: Your Cloudinary API key
 - `CLOUDINARY_API_SECRET`: Your Cloudinary API secret
 - `NEXT_PUBLIC_APP_URL`: https://your-app.vercel.app
-- `TEMPORAL_ADDRESS`: your-temporal-worker.railway.app:443
+- `TEMPORAL_ADDRESS`: your-railway-temporal-server.railway.app:7233
 
 ### 4.4 Deploy Database Schema
 
@@ -182,106 +181,52 @@ npx prisma migrate deploy
 npx prisma db seed
 ```
 
-## Step 5: Set Up Temporal Cloud
+## Step 5: Set Up Self-Hosted Temporal on Railway
 
-### 5.1 Create Temporal Cloud Account
+### 5.1 Create Railway Account
 
-1. Go to [cloud.temporal.io](https://cloud.temporal.io)
+1. Go to [railway.app](https://railway.app)
 2. Sign up with GitHub
-3. Create a new namespace:
-   - Choose a unique namespace name (e.g., `yaels-recipes-prod`)
-   - Select region closest to your users
-4. Download the certificate and key files
+3. Create a new project
 
-### 5.2 Configure Temporal Cloud Connection
+### 5.2 Deploy Temporal Server
 
-1. In your namespace dashboard, get:
-   - Namespace address (e.g., `yaels-recipes-prod.a2dd6.tmprl.cloud:7233`)
-   - Client certificate (.pem file)
-   - Private key (.key file)
+1. **Connect your GitHub repository**
+2. **Add new service** → **Deploy from GitHub repo**
+3. **Service name**: `yaels-recipes-temporal-server`
+4. **Environment variables**:
+   ```
+   PORT=7233
+   TEMPORAL_UI_PORT=8080
+   NODE_ENV=production
+   ```
+5. **Settings**:
+   - Build Command: `npm install`
+   - Start Command: `npm run temporal:server:prod`
+6. **Deploy** and note the Railway URL
 
-2. For Vercel deployment, convert certificates to base64:
-```bash
-# Convert certificate to base64 (single line)
-base64 -i client.pem | tr -d '\n'
+### 5.3 Deploy Temporal Worker
 
-# Convert key to base64 (single line)
-base64 -i client.key | tr -d '\n'
-```
-
-### 5.3 Update Temporal Client for Cloud
-
-Update `src/temporal/client/temporal-client.ts` for production:
-```typescript
-import { Client, Connection } from '@temporalio/client'
-
-export async function createTemporalClient() {
-  if (process.env.NODE_ENV === 'production') {
-    // Temporal Cloud connection
-    const connection = await Connection.connect({
-      address: process.env.TEMPORAL_ADDRESS!,
-      tls: {
-        clientCertPair: process.env.TEMPORAL_CLIENT_CERT_PATH && process.env.TEMPORAL_CLIENT_KEY_PATH
-          ? {
-              crt: Buffer.from(process.env.TEMPORAL_CLIENT_CERT_PATH, 'base64'),
-              key: Buffer.from(process.env.TEMPORAL_CLIENT_KEY_PATH, 'base64'),
-            }
-          : undefined,
-      },
-    })
-
-    return new Client({
-      connection,
-      namespace: process.env.TEMPORAL_NAMESPACE!,
-    })
-  } else {
-    // Local development connection
-    return new Client({
-      connection: await Connection.connect({
-        address: process.env.TEMPORAL_ADDRESS || 'localhost:7234',
-      }),
-    })
-  }
-}
-```
-
-### 5.4 Deploy Worker to Vercel as Serverless Function
-
-Since we're using Temporal Cloud, we can run the worker as a Vercel serverless function for small workloads.
-
-Create `api/temporal-worker.ts`:
-```typescript
-import { Worker } from '@temporalio/worker'
-import * as activities from '../src/temporal/activities/recipe-activities'
-import { createTemporalClient } from '../src/temporal/client/temporal-client'
-
-export default async function handler(req: any, res: any) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' })
-  }
-
-  try {
-    const client = await createTemporalClient()
-
-    const worker = await Worker.create({
-      connection: client.connection,
-      workflowsPath: require.resolve('../src/temporal/workflows'),
-      activities,
-      taskQueue: 'yaels-recipes-task-queue',
-    })
-
-    // Run worker for a short time (Vercel function timeout)
-    await Promise.race([
-      worker.run(),
-      new Promise(resolve => setTimeout(resolve, 25000)) // 25 second timeout
-    ])
-
-    res.status(200).json({ success: true })
-  } catch (error) {
-    console.error('Worker error:', error)
-    res.status(500).json({ error: 'Worker failed' })
-  }
-}
+1. **Add another service** to the same Railway project
+2. **Service name**: `yaels-recipes-temporal-worker`
+3. **Environment variables** (copy from your local .env.local):
+   ```
+   NODE_ENV=production
+   TEMPORAL_ADDRESS=yaels-recipes-temporal-server.railway.app:7233
+   DATABASE_URL=your-neon-connection-string
+   EMAIL_HOST=smtp.gmail.com
+   EMAIL_PORT=587
+   EMAIL_USER=your-email@gmail.com
+   EMAIL_PASS=your-gmail-app-password
+   EMAIL_FROM=Yael's Recipes <your-email@gmail.com>
+   NOTIFICATION_EMAILS=your-notification-emails@gmail.com
+   CLOUDINARY_CLOUD_NAME=your-cloud-name
+   CLOUDINARY_API_KEY=your-api-key
+   CLOUDINARY_API_SECRET=your-api-secret
+   ```
+4. **Settings**:
+   - Build Command: `npm install && npx prisma generate`
+   - Start Command: `npm run temporal:worker`
 
 ## Step 6: Configure Custom Domain (Optional)
 

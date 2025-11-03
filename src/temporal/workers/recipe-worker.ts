@@ -18,25 +18,11 @@ async function run() {
   // Connect to Temporal Server (Cloud or Local)
   let connection: NativeConnection
 
-  if (process.env.NODE_ENV === 'production' && process.env.TEMPORAL_CLIENT_CERT_PATH && process.env.TEMPORAL_CLIENT_KEY_PATH) {
-    // Temporal Cloud connection for production
-    console.log('🔗 [WORKER] Connecting to Temporal Cloud...')
-    connection = await NativeConnection.connect({
-      address: process.env.TEMPORAL_ADDRESS!,
-      tls: {
-        clientCertPair: {
-          crt: Buffer.from(process.env.TEMPORAL_CLIENT_CERT_PATH, 'base64'),
-          key: Buffer.from(process.env.TEMPORAL_CLIENT_KEY_PATH, 'base64'),
-        },
-      },
-    })
-  } else {
-    // Local development connection
-    console.log('🔗 [WORKER] Connecting to local Temporal server...')
-    connection = await NativeConnection.connect({
-      address: process.env.TEMPORAL_ADDRESS || 'localhost:7234',
-    })
-  }
+  // Always connect to self-hosted Temporal server (no Cloud needed)
+  console.log('🔗 [WORKER] Connecting to self-hosted Temporal server...')
+  connection = await NativeConnection.connect({
+    address: process.env.TEMPORAL_ADDRESS || 'localhost:7234',
+  })
 
   // Create a Worker with the Task Queue name from the client
   const worker = await Worker.create({

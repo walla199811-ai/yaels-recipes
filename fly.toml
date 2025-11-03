@@ -1,0 +1,33 @@
+# Fly.io configuration for Temporal Server
+app = "yaels-recipes-temporal"
+primary_region = "iad"
+
+[build]
+  builder = "heroku/nodejs"
+
+[env]
+  NODE_ENV = "production"
+  PORT = "7233"
+  TEMPORAL_UI_PORT = "8080"
+
+[http_service]
+  internal_port = 7233
+  force_https = false
+  auto_stop_machines = false
+  auto_start_machines = true
+  min_machines_running = 1
+
+[[services]]
+  internal_port = 7233
+  protocol = "tcp"
+
+  [[services.ports]]
+    port = 7233
+
+  [[services.ports]]
+    port = 8080
+
+[[vm]]
+  cpu_kind = "shared"
+  cpus = 1
+  memory_mb = 256

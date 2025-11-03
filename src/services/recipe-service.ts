@@ -3,7 +3,7 @@ import { CreateRecipeInput, Recipe } from '@/types/recipe'
 
 /**
  * Recipe service that integrates with Temporal workflows for reliable operations
- * No fallbacks - Temporal is required for all operations
+ * Uses self-hosted Temporal server for free deployment
  */
 export class RecipeService {
   /**

@@ -1,0 +1,52 @@
+services:
+  # Temporal Server
+  - type: web
+    name: yaels-recipes-temporal-server
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm run temporal:server:prod
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 7233
+      - key: TEMPORAL_UI_PORT
+        value: 8080
+
+  # Temporal Worker
+  - type: worker
+    name: yaels-recipes-temporal-worker
+    env: node
+    plan: free
+    buildCommand: npm install && npx prisma generate
+    startCommand: npm run temporal:worker
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: TEMPORAL_ADDRESS
+        fromService:
+          type: web
+          name: yaels-recipes-temporal-server
+          property: host
+      # Add your environment variables here
+      - key: DATABASE_URL
+        sync: false # You'll set this in Render dashboard
+      - key: EMAIL_HOST
+        value: smtp.gmail.com
+      - key: EMAIL_PORT
+        value: 587
+      - key: EMAIL_USER
+        sync: false
+      - key: EMAIL_PASS
+        sync: false
+      - key: EMAIL_FROM
+        sync: false
+      - key: NOTIFICATION_EMAILS
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
