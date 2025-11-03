@@ -61,6 +61,7 @@ export async function PUT(
     const userEmail = request.headers.get('x-user-email') || validatedData.lastModifiedBy || 'Unknown User'
 
     const updateInput: UpdateRecipeInput = {
+      id: params.id,
       ...validatedData,
       category: validatedData.category as RecipeCategory | undefined,
     }
