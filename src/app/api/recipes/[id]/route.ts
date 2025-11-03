@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { temporalRecipeClient } from '@/temporal/client'
+import { DirectRecipeService } from '@/services/recipe-service-direct'
 import { UpdateRecipeInput, RecipeCategory } from '@/types/recipe'
 import { z } from 'zod'
 
@@ -26,8 +26,9 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const recipes = await temporalRecipeClient.getRecipes({ id: params.id })
-    const recipe = recipes.length > 0 ? recipes[0] : null
+    // Get all recipes and filter by ID since DirectRecipeService doesn't have a getById method
+    const recipes = await DirectRecipeService.getRecipes({})
+    const recipe = recipes.find(r => r.id === params.id)
 
     if (!recipe) {
       return NextResponse.json(
@@ -56,13 +57,15 @@ export async function PUT(
     // Validate the input
     const validatedData = updateRecipeSchema.parse(body)
 
+    // Extract user email from headers for audit trail
+    const userEmail = request.headers.get('x-user-email') || validatedData.lastModifiedBy || 'Unknown User'
+
     const updateInput: UpdateRecipeInput = {
-      id: params.id,
       ...validatedData,
       category: validatedData.category as RecipeCategory | undefined,
     }
 
-    const recipe = await temporalRecipeClient.updateRecipe(updateInput)
+    const recipe = await DirectRecipeService.updateRecipe(params.id, updateInput, userEmail)
 
     return NextResponse.json(recipe)
   } catch (error) {
@@ -88,9 +91,9 @@ export async function DELETE(
 ) {
   try {
     const { searchParams } = new URL(request.url)
-    const deletedBy = searchParams.get('deletedBy') || 'Unknown'
+    const deletedBy = searchParams.get('deletedBy') || request.headers.get('x-user-email') || 'Unknown'
 
-    await temporalRecipeClient.deleteRecipe(params.id, deletedBy)
+    await DirectRecipeService.deleteRecipe(params.id, deletedBy)
 
     return NextResponse.json({ message: 'Recipe deleted successfully' })
   } catch (error) {
