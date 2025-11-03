@@ -202,22 +202,144 @@ export class TemporalRecipeClient {
 
   // Direct database fallback methods for when Temporal is unavailable in production
   private async getRecipesDirectly(filters?: RecipeSearchFilters): Promise<Recipe[]> {
-    const { fetchRecipesFromDB } = await import('./activities')
-    return await fetchRecipesFromDB(filters)
+    console.log('🔄 Using direct database access for getRecipes')
+    const { prisma } = await import('@/lib/prisma')
+
+    // Build the where clause based on filters
+    const where: any = {}
+
+    if (filters?.id) {
+      where.id = filters.id
+    }
+
+    if (filters?.query) {
+      where.OR = [
+        { title: { contains: filters.query, mode: 'insensitive' } },
+        { description: { contains: filters.query, mode: 'insensitive' } },
+        { ingredients: { some: { text: { contains: filters.query, mode: 'insensitive' } } } }
+      ]
+    }
+
+    if (filters?.category) {
+      where.category = filters.category
+    }
+
+    if (filters?.tags && filters.tags.length > 0) {
+      where.tags = { hasSome: filters.tags }
+    }
+
+    if (filters?.maxPrepTime) {
+      where.prepTimeMinutes = { lte: filters.maxPrepTime }
+    }
+
+    if (filters?.maxCookTime) {
+      where.cookTimeMinutes = { lte: filters.maxCookTime }
+    }
+
+    const recipes = await prisma.recipe.findMany({
+      where,
+      orderBy: { createdAt: 'desc' }
+    })
+
+    return recipes.map(recipe => ({
+      ...recipe,
+      description: recipe.description || undefined,
+      photoUrl: recipe.photoUrl || undefined,
+      category: recipe.category as any,
+      ingredients: Array.isArray(recipe.ingredients)
+        ? (recipe.ingredients as any[]).sort((a: any, b: any) => a.order - b.order)
+        : (recipe.ingredients as any) || [],
+      instructions: Array.isArray(recipe.instructions)
+        ? (recipe.instructions as any[]).sort((a: any, b: any) => a.step - b.step)
+        : (recipe.instructions as any) || []
+    })) as Recipe[]
   }
 
   private async createRecipeDirectly(input: CreateRecipeInput): Promise<Recipe> {
-    const { validateRecipeData, saveRecipeToDB, sendNotificationEmail } = await import('./activities')
+    console.log('🔄 Using direct database access for createRecipe')
+    const { prisma } = await import('@/lib/prisma')
 
-    // Validate the recipe data
-    await validateRecipeData(input)
+    // Basic validation
+    if (!input.title || input.title.trim().length === 0) {
+      throw new Error('Recipe title is required')
+    }
 
-    // Save to database
-    const recipe = await saveRecipeToDB(input)
+    if (!input.ingredients || input.ingredients.length === 0) {
+      throw new Error('At least one ingredient is required')
+    }
+
+    if (!input.instructions || input.instructions.length === 0) {
+      throw new Error('At least one instruction is required')
+    }
+
+    // Create recipe in database
+    const newRecipe = await prisma.recipe.create({
+      data: {
+        title: input.title,
+        description: input.description || null,
+        category: input.category as any,
+        prepTimeMinutes: input.prepTimeMinutes,
+        cookTimeMinutes: input.cookTimeMinutes,
+        servings: input.servings,
+        ingredients: input.ingredients.map((ing, index) => ({
+          order: index + 1,
+          text: ing.text
+        })),
+        instructions: input.instructions.map((inst, index) => ({
+          step: index + 1,
+          text: inst.text
+        })),
+        photoUrl: input.photoUrl || null,
+        tags: input.tags,
+        createdBy: input.createdBy,
+        lastModifiedBy: input.createdBy,
+      }
+    })
+
+    const recipe = {
+      ...newRecipe,
+      description: newRecipe.description || undefined,
+      photoUrl: newRecipe.photoUrl || undefined,
+      category: newRecipe.category as any,
+      ingredients: newRecipe.ingredients as Array<{ order: number; text: string }>,
+      instructions: newRecipe.instructions as Array<{ step: number; text: string }>
+    }
 
     // Send notification (non-blocking)
     try {
-      await sendNotificationEmail('created', recipe, input.createdBy)
+      // Import email service dynamically
+      const nodemailer = await import('nodemailer')
+
+      if (process.env.EMAIL_USER && process.env.EMAIL_PASS && process.env.NOTIFICATION_EMAILS) {
+        const transporter = nodemailer.default.createTransport({
+          host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+          port: parseInt(process.env.EMAIL_PORT || '587'),
+          secure: false,
+          auth: {
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASS,
+          },
+        })
+
+        const notificationEmails = process.env.NOTIFICATION_EMAILS.split(',')
+        const subject = `Recipe added: ${recipe.title}`
+        const emailBody = `
+          <h2>Recipe Added</h2>
+          <p><strong>${recipe.title}</strong> has been added by ${input.createdBy}.</p>
+          <p><strong>Category:</strong> ${recipe.category}</p>
+          <p><strong>Prep Time:</strong> ${recipe.prepTimeMinutes} minutes</p>
+          <p><strong>Cook Time:</strong> ${recipe.cookTimeMinutes} minutes</p>
+          <p><strong>Servings:</strong> ${recipe.servings}</p>
+          ${recipe.description ? `<p><strong>Description:</strong> ${recipe.description}</p>` : ''}
+        `
+
+        await transporter.sendMail({
+          from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
+          to: notificationEmails.join(','),
+          subject,
+          html: emailBody,
+        })
+      }
     } catch (emailError) {
       console.warn('Failed to send notification email:', emailError)
     }
@@ -226,42 +348,93 @@ export class TemporalRecipeClient {
   }
 
   private async updateRecipeDirectly(input: UpdateRecipeInput): Promise<Recipe> {
-    const { validateRecipeData, updateRecipeInDB, sendNotificationEmail } = await import('./activities')
+    console.log('🔄 Using direct database access for updateRecipe')
+    const { prisma } = await import('@/lib/prisma')
 
-    // Validate the recipe data
-    await validateRecipeData(input)
+    const { id, ...updateData } = input
 
-    // Update in database
-    const recipe = await updateRecipeInDB(input)
+    // Process data for database
+    const processedData: any = { ...updateData }
 
-    // Send notification (non-blocking)
-    try {
-      await sendNotificationEmail('updated', recipe, input.lastModifiedBy || input.createdBy || 'system')
-    } catch (emailError) {
-      console.warn('Failed to send notification email:', emailError)
+    if (updateData.ingredients) {
+      processedData.ingredients = updateData.ingredients.map((ingredient, index) => ({
+        ...ingredient,
+        order: index + 1,
+      }))
     }
 
-    return recipe
+    if (updateData.instructions) {
+      processedData.instructions = updateData.instructions.map((instruction, index) => ({
+        ...instruction,
+        step: index + 1,
+      }))
+    }
+
+    // Update recipe in database
+    const updatedRecipe = await prisma.recipe.update({
+      where: { id },
+      data: processedData,
+    })
+
+    return {
+      ...updatedRecipe,
+      description: updatedRecipe.description || undefined,
+      photoUrl: updatedRecipe.photoUrl || undefined,
+      category: updatedRecipe.category as any,
+      ingredients: updatedRecipe.ingredients as any,
+      instructions: updatedRecipe.instructions as any,
+    }
   }
 
   private async deleteRecipeDirectly(recipeId: string, deletedBy: string): Promise<void> {
-    const { fetchRecipesFromDB, deleteRecipeFromDB, sendNotificationEmail } = await import('./activities')
+    console.log('🔄 Using direct database access for deleteRecipe')
+    const { prisma } = await import('@/lib/prisma')
 
     // Get recipe for notification before deleting
-    const recipes = await fetchRecipesFromDB({ id: recipeId })
-    const recipe = recipes[0]
+    const recipe = await prisma.recipe.findUnique({
+      where: { id: recipeId }
+    })
 
     if (recipe) {
       // Send notification before deletion (non-blocking)
       try {
-        await sendNotificationEmail('deleted', recipe, deletedBy)
+        // Import email service dynamically
+        const nodemailer = await import('nodemailer')
+
+        if (process.env.EMAIL_USER && process.env.EMAIL_PASS && process.env.NOTIFICATION_EMAILS) {
+          const transporter = nodemailer.default.createTransport({
+            host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+            port: parseInt(process.env.EMAIL_PORT || '587'),
+            secure: false,
+            auth: {
+              user: process.env.EMAIL_USER,
+              pass: process.env.EMAIL_PASS,
+            },
+          })
+
+          const notificationEmails = process.env.NOTIFICATION_EMAILS.split(',')
+          const subject = `Recipe deleted: ${recipe.title}`
+          const emailBody = `
+            <h2>Recipe Deleted</h2>
+            <p><strong>${recipe.title}</strong> has been deleted by ${deletedBy}.</p>
+          `
+
+          await transporter.sendMail({
+            from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
+            to: notificationEmails.join(','),
+            subject,
+            html: emailBody,
+          })
+        }
       } catch (emailError) {
         console.warn('Failed to send notification email:', emailError)
       }
     }
 
     // Delete from database
-    await deleteRecipeFromDB(recipeId)
+    await prisma.recipe.delete({
+      where: { id: recipeId }
+    })
   }
 }
 
