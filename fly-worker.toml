@@ -1,0 +1,15 @@
+# Fly.io configuration for Temporal Worker
+app = "yaels-recipes-worker"
+primary_region = "iad"
+
+[build]
+  dockerfile = "Dockerfile.worker"
+
+[env]
+  NODE_ENV = "production"
+
+# No HTTP service needed for worker
+[vm]
+  cpu_kind = "shared"
+  cpus = 1
+  memory_mb = 256

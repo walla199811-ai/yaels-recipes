@@ -13,14 +13,14 @@ This guide shows you how to deploy Yael's Recipes using **completely free** serv
 
 **Total Cost: $0/month forever** ✨
 
-## 🎯 **Option 1: Render.com (Recommended)**
+## 🎯 **Option 1: Fly.io (Recommended)**
 
-### Why Render.com?
-- ✅ **750 hours/month per service** (enough for 24/7)
-- ✅ **512MB RAM** (perfect for Temporal)
-- ✅ **Auto-deploy from GitHub**
-- ✅ **Built-in environment variables**
-- ✅ **Free SSL certificates**
+### Why Fly.io?
+- ✅ **3 shared CPU VMs** (256MB each)
+- ✅ **No auto-sleep** (always available)
+- ✅ **160GB bandwidth**
+- ✅ **Easy binary installation** (perfect for Temporal CLI)
+- ✅ **Global edge locations**
 
 ### Setup Steps:
 
@@ -114,32 +114,19 @@ This guide shows you how to deploy Yael's Recipes using **completely free** serv
    - Same repository
    - Set run command: `npm run temporal:worker`
 
-## 🔧 **Vercel Deployment (Same for All Options)**
+## 🔧 **Vercel Deployment (Next.js App)**
 
-1. **Connect to Vercel**
-   - Go to [vercel.com](https://vercel.com)
-   - Import your GitHub repository
+Once your Temporal infrastructure is running on Render.com:
 
-2. **Environment Variables**
-   ```env
-   DATABASE_URL=your-neon-connection-string
-   NEXT_PUBLIC_APP_URL=https://your-app.vercel.app
-   EMAIL_HOST=smtp.gmail.com
-   EMAIL_PORT=587
-   EMAIL_USER=your-email@gmail.com
-   EMAIL_PASS=your-gmail-app-password
-   EMAIL_FROM=Yael's Recipes <your-email@gmail.com>
-   NOTIFICATION_EMAILS=your-notification-emails@gmail.com
-   CLOUDINARY_CLOUD_NAME=your-cloud-name
-   CLOUDINARY_API_KEY=your-api-key
-   CLOUDINARY_API_SECRET=your-api-secret
-   TEMPORAL_ADDRESS=your-temporal-server-url:7233
-   TEMPORAL_NAMESPACE=default
-   ```
+1. **Follow the detailed guide**: See `VERCEL-DEPLOYMENT.md` for complete step-by-step instructions
+2. **Quick summary**:
+   - Import repository to Vercel
+   - Configure 15 environment variables
+   - Deploy automatically
+   - Run database migrations
+   - Test functionality
 
-3. **Deploy**
-   - Push to main branch
-   - Vercel auto-deploys
+**Complete deployment guide**: [VERCEL-DEPLOYMENT.md](./VERCEL-DEPLOYMENT.md)
 
 ## 📊 **Free Tier Limits Comparison**
 
@@ -149,15 +136,19 @@ This guide shows you how to deploy Yael's Recipes using **completely free** serv
 | **Fly.io** | Shared | 256MB | 160GB | 3GB | ✅ |
 | **Koyeb** | 0.1 CPU | 512MB | 100GB | 2.5GB | ✅ |
 
-## 🎯 **My Recommendation: Start with Render.com**
+## 🎯 **My Recommendation: Render.com (Fixed)**
 
 **Why?**
 - Most generous RAM (512MB vs 256MB)
-- Easiest deployment with `render.yaml`
+- Easiest deployment with `render.yaml` Blueprint
 - Auto-wakes on requests (sleep isn't a problem)
+- **Fixed**: Temporal CLI now properly installed and accessible
 - Can upgrade to always-on for $7/month later
 
-**If you need always-on:** Use Fly.io
+**Updated render.yaml configuration:**
+- ✅ Fixed binary path issue: `./temporal` instead of `temporal`
+- ✅ Proper installation: `curl -sSf https://temporal.download/cli.sh | sh && chmod +x temporal`
+- ✅ Correct port configuration for Render.com
 
 ## 🔍 **Troubleshooting Free Deployments**
 

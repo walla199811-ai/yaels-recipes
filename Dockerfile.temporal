@@ -1,0 +1,29 @@
+# Dockerfile for Temporal Server deployment
+FROM node:18-alpine
+
+# Install curl and other dependencies
+RUN apk add --no-cache curl bash
+
+# Create app directory
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies
+RUN npm install
+
+# Install Temporal CLI
+RUN curl -sSf https://temporal.download/cli.sh | sh
+
+# Copy source code
+COPY . .
+
+# Generate Prisma client
+RUN npx prisma generate
+
+# Expose ports
+EXPOSE 7233 8080
+
+# Start Temporal server
+CMD ["./temporal", "server", "start-dev", "--port", "7233", "--ui-port", "8080"]

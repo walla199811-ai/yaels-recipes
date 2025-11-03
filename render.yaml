@@ -4,8 +4,8 @@ services:
     name: yaels-recipes-temporal-server
     env: node
     plan: free
-    buildCommand: npm install
-    startCommand: npm run temporal:server:prod
+    buildCommand: npm install && curl -sSf https://temporal.download/cli.sh | sh && chmod +x temporal
+    startCommand: ./temporal server start-dev --port $PORT --ui-port ${TEMPORAL_UI_PORT:-8080}
     envVars:
       - key: NODE_ENV
         value: production
@@ -28,7 +28,7 @@ services:
         fromService:
           type: web
           name: yaels-recipes-temporal-server
-          property: host
+          property: hostport
       # Add your environment variables here
       - key: DATABASE_URL
         sync: false # You'll set this in Render dashboard

@@ -3,12 +3,10 @@ app = "yaels-recipes-temporal"
 primary_region = "iad"
 
 [build]
-  builder = "heroku/nodejs"
+  dockerfile = "Dockerfile.temporal"
 
 [env]
   NODE_ENV = "production"
-  PORT = "7233"
-  TEMPORAL_UI_PORT = "8080"
 
 [http_service]
   internal_port = 7233
@@ -27,7 +25,7 @@ primary_region = "iad"
   [[services.ports]]
     port = 8080
 
-[[vm]]
+[vm]
   cpu_kind = "shared"
   cpus = 1
   memory_mb = 256
