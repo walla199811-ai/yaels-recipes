@@ -16,13 +16,13 @@ server.listen(port, () => {
   console.log(`✅ HTTP health server started on port ${port}`);
 });
 
-// Start Temporal server in background
+// Start Temporal server in background on a different port
 console.log('🔧 Starting Temporal server...');
 const temporal = spawn('./temporal', [
   'server',
   'start-dev',
   '--ip', '0.0.0.0',
-  '--port', '7233',
+  '--port', '7234',
   '--headless'
 ], {
   stdio: 'inherit'
