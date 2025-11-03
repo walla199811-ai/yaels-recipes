@@ -22,6 +22,7 @@ const createRecipeSchema = z.object({
 })
 
 export async function GET(request: NextRequest) {
+  // NO-TEMPORAL: Direct database access only - v2.0
   console.log('🔍 [RECIPES API] GET request started at:', new Date().toISOString())
   console.log('🔍 [RECIPES API] Request URL:', request.url)
   console.log('🔍 [RECIPES API] Environment:', process.env.NODE_ENV)
