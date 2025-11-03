@@ -1,15 +1,15 @@
 #!/usr/bin/env node
 
+const net = require('net');
 const http = require('http');
-const httpProxy = require('http-proxy');
 const { spawn } = require('child_process');
 
-console.log('🚀 Starting Temporal server with gRPC proxy...');
+console.log('🚀 Starting Temporal server with TCP proxy...');
 
 const port = process.env.PORT || 3000;
 const temporalPort = 7234; // Internal port for Temporal server
 
-console.log(`🔧 HTTP/gRPC proxy will use port: ${port}`);
+console.log(`🔧 TCP proxy will use port: ${port}`);
 console.log(`🔧 Temporal server will use internal port: ${temporalPort}`);
 
 // Start Temporal server on internal port
@@ -23,34 +23,67 @@ const temporal = spawn('./temporal', [
   stdio: 'inherit'
 });
 
-// Create proxy for gRPC requests
-const proxy = httpProxy.createProxyServer({});
+// Create TCP server that handles both HTTP health checks and raw gRPC traffic
+const server = net.createServer((clientSocket) => {
+  console.log('📡 New connection received');
 
-// Create HTTP server that handles both health checks and gRPC proxying
-const server = http.createServer((req, res) => {
-  // Handle health check requests
-  if (req.method === 'GET' && req.url === '/') {
-    res.writeHead(200, {'Content-Type': 'text/plain'});
-    res.end('Temporal Server Running\n');
-    return;
-  }
+  // Buffer to peek at the first few bytes to determine if it's HTTP or gRPC
+  let isFirstChunk = true;
 
-  // For all other requests (gRPC), proxy to internal Temporal server
-  proxy.web(req, res, {
-    target: `http://127.0.0.1:${temporalPort}`,
-    changeOrigin: true,
+  clientSocket.on('data', (data) => {
+    if (isFirstChunk) {
+      isFirstChunk = false;
+
+      // Check if this looks like an HTTP request (starts with HTTP verbs)
+      const dataStr = data.toString('ascii', 0, Math.min(data.length, 10));
+      const isHTTP = /^(GET|POST|PUT|DELETE|HEAD|OPTIONS|PATCH) /.test(dataStr);
+
+      if (isHTTP && dataStr.includes('GET /')) {
+        // Handle HTTP health check
+        console.log('🔍 Health check request detected');
+        const response = 'HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 23\r\n\r\nTemporal Server Running\n';
+        clientSocket.write(response);
+        clientSocket.end();
+        return;
+      }
+
+      // For gRPC traffic, create proxy connection to Temporal server
+      console.log('🔄 Proxying gRPC traffic to Temporal server');
+      const serverSocket = net.connect(temporalPort, '127.0.0.1');
+
+      // Forward this initial data
+      serverSocket.write(data);
+
+      // Pipe data in both directions
+      clientSocket.pipe(serverSocket, { end: false });
+      serverSocket.pipe(clientSocket, { end: false });
+
+      // Handle connection cleanup
+      clientSocket.on('close', () => {
+        console.log('🔌 Client connection closed');
+        serverSocket.end();
+      });
+
+      serverSocket.on('close', () => {
+        console.log('🔌 Server connection closed');
+        clientSocket.end();
+      });
+
+      serverSocket.on('error', (err) => {
+        console.error('❌ Server socket error:', err.message);
+        clientSocket.end();
+      });
+
+    }
   });
-});
 
-// Handle WebSocket upgrades for gRPC streams
-server.on('upgrade', (req, socket, head) => {
-  proxy.ws(req, socket, head, {
-    target: `ws://127.0.0.1:${temporalPort}`,
+  clientSocket.on('error', (err) => {
+    console.error('❌ Client socket error:', err.message);
   });
 });
 
 server.listen(port, '0.0.0.0', () => {
-  console.log(`✅ gRPC proxy server started on port ${port}`);
+  console.log(`✅ TCP proxy server started on port ${port}`);
 });
 
 temporal.on('close', (code) => {
