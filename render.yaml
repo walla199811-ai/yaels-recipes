@@ -10,36 +10,36 @@ services:
       - key: NODE_ENV
         value: production
 
-  # Temporal Worker (Free Plan - Web Service with Worker Process) - TEMPORARILY DISABLED
-  # - type: web
-  #   name: yaels-recipes-temporal-worker
-  #   env: node
-  #   plan: free
-  #   buildCommand: npm install && npx prisma generate
-  #   startCommand: npm run temporal:worker
-  #   envVars:
-  #     - key: NODE_ENV
-  #       value: production
-  #     - key: TEMPORAL_ADDRESS
-  #       sync: false
-  #     # Add your environment variables here
-  #     - key: DATABASE_URL
-  #       sync: false # You'll set this in Render dashboard
-  #     - key: EMAIL_HOST
-  #       value: smtp.gmail.com
-  #     - key: EMAIL_PORT
-  #       value: 587
-  #     - key: EMAIL_USER
-  #       sync: false
-  #     - key: EMAIL_PASS
-  #       sync: false
-  #     - key: EMAIL_FROM
-  #       sync: false
-  #     - key: NOTIFICATION_EMAILS
-  #       sync: false
-  #     - key: CLOUDINARY_CLOUD_NAME
-  #       sync: false
-  #     - key: CLOUDINARY_API_KEY
-  #       sync: false
-  #     - key: CLOUDINARY_API_SECRET
-  #       sync: false
+  # Temporal Worker (Free Plan - Web Service with Worker Process)
+  - type: web
+    name: yaels-recipes-temporal-worker
+    env: node
+    plan: free
+    buildCommand: npm install && npx prisma generate
+    startCommand: npm run temporal:worker
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: TEMPORAL_ADDRESS
+        value: yaels-recipes-temporal-server.onrender.com:7234
+      # Add your environment variables here
+      - key: DATABASE_URL
+        sync: false # You'll set this in Render dashboard
+      - key: EMAIL_HOST
+        value: smtp.gmail.com
+      - key: EMAIL_PORT
+        value: 587
+      - key: EMAIL_USER
+        sync: false
+      - key: EMAIL_PASS
+        sync: false
+      - key: EMAIL_FROM
+        sync: false
+      - key: NOTIFICATION_EMAILS
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
