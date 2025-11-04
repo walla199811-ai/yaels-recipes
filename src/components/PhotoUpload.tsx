@@ -32,7 +32,7 @@ interface PhotoUploadProps {
 export function PhotoUpload({
   value,
   onChange,
-  maxSizeMB = 5,
+  maxSizeMB = 9,
   acceptedFormats = ['image/jpeg', 'image/png', 'image/webp'],
   disabled = false,
 }: PhotoUploadProps) {
