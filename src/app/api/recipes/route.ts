@@ -6,7 +6,7 @@ import { z } from 'zod'
 const createRecipeSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   description: z.string().optional(),
-  category: z.enum(['APPETIZER', 'SOUP', 'MAIN', 'SIDE', 'DESSERT', 'BEVERAGE', 'SNACK']),
+  category: z.enum(['MAIN', 'SIDE', 'DESSERT']),
   prepTimeMinutes: z.number().min(0),
   cookTimeMinutes: z.number().min(0),
   servings: z.number().min(1),
@@ -81,8 +81,9 @@ export async function GET(request: NextRequest) {
     if (query) {
       where.OR = [
         { title: { contains: query, mode: 'insensitive' } },
-        { description: { contains: query, mode: 'insensitive' } },
-        { ingredients: { some: { text: { contains: query, mode: 'insensitive' } } } }
+        { description: { contains: query, mode: 'insensitive' } }
+        // Note: Searching within JSON ingredients is complex with Prisma
+        // For now, search is limited to title and description
       ]
     }
 
