@@ -132,38 +132,62 @@ export default function RecipeDetailPage() {
       </Box>
       <Box sx={{ py: 4 }}>
         {/* Header */}
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 3, gap: 2 }}>
-          <IconButton onClick={handleBack} size="large" className="no-print">
-            <ArrowBack />
-          </IconButton>
-          <Typography variant="h4" component="h1" sx={{ flexGrow: 1 }} className="recipe-title">
-            {recipe.title}
-          </Typography>
-          <Button
-            startIcon={<Print />}
-            variant="outlined"
-            onClick={handlePrint}
-            className="no-print"
-          >
-            הדפסה
-          </Button>
-          <Button
-            startIcon={<Edit />}
-            variant="outlined"
-            onClick={handleEdit}
-            className="no-print"
-          >
-            עריכה
-          </Button>
-          <Button
-            startIcon={<Delete />}
-            variant="outlined"
-            color="error"
-            onClick={handleDelete}
-            className="no-print"
-          >
-            מחיקה
-          </Button>
+        <Box sx={{ mb: 3 }}>
+          {/* Top row with back button and title */}
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, gap: 2 }}>
+            <IconButton onClick={handleBack} size="large" className="no-print">
+              <ArrowBack />
+            </IconButton>
+            <Typography
+              variant="h4"
+              component="h1"
+              sx={{
+                flexGrow: 1,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                minWidth: 0 // This is important for text overflow to work in flex containers
+              }}
+              className="recipe-title"
+            >
+              {recipe.title}
+            </Typography>
+          </Box>
+
+          {/* Action buttons row */}
+          <Box sx={{
+            display: 'flex',
+            gap: 2,
+            justifyContent: 'flex-end',
+            flexWrap: 'wrap',
+            '& .MuiButton-root': {
+              minWidth: '100px', // Ensure buttons maintain minimum width
+              whiteSpace: 'nowrap'
+            }
+          }} className="no-print">
+            <Button
+              startIcon={<Print />}
+              variant="outlined"
+              onClick={handlePrint}
+            >
+              הדפסה
+            </Button>
+            <Button
+              startIcon={<Edit />}
+              variant="outlined"
+              onClick={handleEdit}
+            >
+              עריכה
+            </Button>
+            <Button
+              startIcon={<Delete />}
+              variant="outlined"
+              color="error"
+              onClick={handleDelete}
+            >
+              מחיקה
+            </Button>
+          </Box>
         </Box>
 
         <Grid container spacing={4}>
