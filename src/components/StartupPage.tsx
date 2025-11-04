@@ -117,26 +117,26 @@ const StaticContainer = styled(Box)(() => ({
 
 const images = [
   {
-    src: 'https://picsum.photos/150/150?random=1',
-    alt: 'Family photo 1',
+    src: '/images/startup/image1.jpg',
+    alt: 'תמונה משפחתית 1',
     mobilePosition: { top: '8%', left: '5%' },
     desktopPosition: { top: '15%', left: '15%' }
   },
   {
-    src: 'https://picsum.photos/150/150?random=2',
-    alt: 'Family photo 2',
+    src: '/images/startup/image2.jpg',
+    alt: 'תמונה משפחתית 2',
     mobilePosition: { top: '10%', right: '5%' },
     desktopPosition: { top: '20%', right: '20%' }
   },
   {
-    src: 'https://picsum.photos/150/150?random=3',
-    alt: 'Family photo 3',
+    src: '/images/startup/image3.jpg',
+    alt: 'תמונה משפחתית 3',
     mobilePosition: { bottom: '8%', left: '5%' },
     desktopPosition: { bottom: '25%', left: '10%' }
   },
   {
-    src: 'https://picsum.photos/150/150?random=4',
-    alt: 'Family photo 4',
+    src: '/images/startup/image4.jpg',
+    alt: 'תמונה משפחתית 4',
     mobilePosition: { bottom: '6%', right: '5%' },
     desktopPosition: { bottom: '20%', right: '15%' }
   },
