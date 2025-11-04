@@ -6,7 +6,7 @@ import { z } from 'zod'
 const updateRecipeSchema = z.object({
   title: z.string().min(1, 'Title is required').optional(),
   description: z.string().optional(),
-  category: z.enum(['APPETIZER', 'SOUP', 'MAIN', 'SIDE', 'DESSERT', 'BEVERAGE', 'SNACK']).optional(),
+  category: z.enum(['MAIN', 'SIDE', 'DESSERT']).optional(),
   prepTimeMinutes: z.number().min(0).optional(),
   cookTimeMinutes: z.number().min(0).optional(),
   servings: z.number().min(1).optional(),

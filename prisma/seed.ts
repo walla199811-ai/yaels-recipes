@@ -39,7 +39,7 @@ const mockRecipes = [
   {
     title: "חומוס הבית המושלם",
     description: "חומוס קרמי וטעים, הסוד הוא בהכנה הנכונה של החומוס ובתיבול המושלם",
-    category: RecipeCategory.APPETIZER,
+    category: RecipeCategory.SIDE,
     prepTimeMinutes: 15,
     cookTimeMinutes: 0,
     servings: 6,
@@ -135,7 +135,7 @@ const mockRecipes = [
   {
     title: "Classic Hummus",
     description: "Smooth and creamy homemade hummus that's much better than store-bought.",
-    category: RecipeCategory.APPETIZER,
+    category: RecipeCategory.SIDE,
     prepTimeMinutes: 10,
     cookTimeMinutes: 0,
     servings: 8,
@@ -233,7 +233,7 @@ const mockRecipes = [
   {
     title: "Traditional Matzo Ball Soup",
     description: "Light, fluffy matzo balls in rich chicken broth - perfect for holidays.",
-    category: RecipeCategory.SOUP,
+    category: RecipeCategory.MAIN,
     prepTimeMinutes: 30,
     cookTimeMinutes: 40,
     servings: 8,
@@ -265,7 +265,7 @@ const mockRecipes = [
   {
     title: "Fresh Berry Smoothie Bowl",
     description: "A refreshing and healthy breakfast bowl topped with fresh fruits and nuts.",
-    category: RecipeCategory.SNACK,
+    category: RecipeCategory.SIDE,
     prepTimeMinutes: 10,
     cookTimeMinutes: 0,
     servings: 2,
@@ -293,7 +293,7 @@ const mockRecipes = [
   {
     title: "Spiced Chai Latte",
     description: "Homemade chai with warming spices - much better than coffee shop versions.",
-    category: RecipeCategory.BEVERAGE,
+    category: RecipeCategory.SIDE,
     prepTimeMinutes: 5,
     cookTimeMinutes: 15,
     servings: 4,
