@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { Box, Typography, Fade, Zoom, Slide } from '@mui/material'
+import { Box, Typography, Fade, Zoom, Slide, useTheme, useMediaQuery } from '@mui/material'
 import { styled, keyframes } from '@mui/material/styles'
 
 // Animation keyframes
@@ -48,24 +48,45 @@ const StartupContainer = styled(Box)(({ theme }) => ({
 
 const FloatingImage = styled(Box, {
   shouldForwardProp: (prop) => prop !== 'delay',
-})<{ delay: number }>(({ delay }) => ({
-  width: '150px',
-  height: '150px',
+})<{ delay: number }>(({ delay, theme }) => ({
+  width: '110px', // Larger mobile size for better visibility
+  height: '110px',
   borderRadius: '50%',
   backgroundColor: 'rgba(255, 255, 255, 0.95)',
   animation: `${floatAnimation} 4s ease-in-out infinite`,
   animationDelay: `${delay}s`,
-  boxShadow: '0 10px 35px rgba(0, 0, 0, 0.12), 0 0 0 4px rgba(255, 255, 255, 0.6)',
+  boxShadow: '0 8px 25px rgba(0, 0, 0, 0.15), 0 0 0 3px rgba(255, 255, 255, 0.7)',
   transition: 'transform 0.3s ease',
   overflow: 'hidden',
   '&:hover': {
-    transform: 'scale(1.08)',
+    transform: 'scale(1.05)',
   },
   '& img': {
     width: '100%',
     height: '100%',
     objectFit: 'cover',
     borderRadius: '50%',
+  },
+  // Responsive sizes
+  [theme.breakpoints.up('sm')]: {
+    width: '120px',
+    height: '120px',
+    boxShadow: '0 10px 30px rgba(0, 0, 0, 0.15), 0 0 0 4px rgba(255, 255, 255, 0.7)',
+    '&:hover': {
+      transform: 'scale(1.06)',
+    },
+  },
+  [theme.breakpoints.up('md')]: {
+    width: '140px',
+    height: '140px',
+    boxShadow: '0 12px 35px rgba(0, 0, 0, 0.18), 0 0 0 4px rgba(255, 255, 255, 0.8)',
+    '&:hover': {
+      transform: 'scale(1.08)',
+    },
+  },
+  [theme.breakpoints.up('lg')]: {
+    width: '150px',
+    height: '150px',
   },
 }))
 
@@ -95,10 +116,30 @@ const StaticContainer = styled(Box)(() => ({
 }))
 
 const images = [
-  { src: 'https://picsum.photos/150/150?random=1', alt: 'Family photo 1', position: { top: '15%', left: '15%' } },
-  { src: 'https://picsum.photos/150/150?random=2', alt: 'Family photo 2', position: { top: '20%', right: '20%' } },
-  { src: 'https://picsum.photos/150/150?random=3', alt: 'Family photo 3', position: { bottom: '25%', left: '10%' } },
-  { src: 'https://picsum.photos/150/150?random=4', alt: 'Family photo 4', position: { bottom: '20%', right: '15%' } },
+  {
+    src: 'https://picsum.photos/150/150?random=1',
+    alt: 'Family photo 1',
+    mobilePosition: { top: '8%', left: '5%' },
+    desktopPosition: { top: '15%', left: '15%' }
+  },
+  {
+    src: 'https://picsum.photos/150/150?random=2',
+    alt: 'Family photo 2',
+    mobilePosition: { top: '10%', right: '5%' },
+    desktopPosition: { top: '20%', right: '20%' }
+  },
+  {
+    src: 'https://picsum.photos/150/150?random=3',
+    alt: 'Family photo 3',
+    mobilePosition: { bottom: '8%', left: '5%' },
+    desktopPosition: { bottom: '25%', left: '10%' }
+  },
+  {
+    src: 'https://picsum.photos/150/150?random=4',
+    alt: 'Family photo 4',
+    mobilePosition: { bottom: '6%', right: '5%' },
+    desktopPosition: { bottom: '20%', right: '15%' }
+  },
 ]
 
 interface StartupPageProps {
@@ -110,6 +151,9 @@ export const StartupPage: React.FC<StartupPageProps> = ({ onEnter }) => {
   const [showSubtitle, setShowSubtitle] = useState(false)
   const [showImages, setShowImages] = useState(false)
   const [showDedication, setShowDedication] = useState(false)
+
+  const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'))
 
   useEffect(() => {
     const timers = [
@@ -129,24 +173,27 @@ export const StartupPage: React.FC<StartupPageProps> = ({ onEnter }) => {
   return (
     <StartupContainer onClick={handleClick}>
       {/* Floating Recipe Images */}
-      {images.map((image, index) => (
-        <Zoom
-          key={index}
-          in={showImages}
-          timeout={600}
-          style={{ transitionDelay: `${index * 200}ms` }}
-        >
-          <FloatingImage
-            delay={index * 0.5}
-            sx={{
-              position: 'absolute',
-              ...image.position,
-            }}
+      {images.map((image, index) => {
+        const position = isMobile ? image.mobilePosition : image.desktopPosition
+        return (
+          <Zoom
+            key={index}
+            in={showImages}
+            timeout={600}
+            style={{ transitionDelay: `${index * 200}ms` }}
           >
-            <img src={image.src} alt={image.alt} />
-          </FloatingImage>
-        </Zoom>
-      ))}
+            <FloatingImage
+              delay={index * 0.5}
+              sx={{
+                position: 'absolute',
+                ...position,
+              }}
+            >
+              <img src={image.src} alt={image.alt} />
+            </FloatingImage>
+          </Zoom>
+        )
+      })}
 
       {/* Main Content */}
       <StaticContainer>
