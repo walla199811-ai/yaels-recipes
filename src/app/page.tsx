@@ -1,19 +1,23 @@
 'use client'
 
-import { Container, Typography, Box, Grid, CircularProgress, Alert, Fab } from '@mui/material'
+import { Container, Typography, Box, Grid, CircularProgress, Alert, Fab, Fade } from '@mui/material'
 import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { Add } from '@mui/icons-material'
 import { useRecipes } from '@/hooks/useRecipes'
+import { useFirstVisit } from '@/hooks/useFirstVisit'
 import { RecipeCard } from '@/components/RecipeCard'
 import { SearchBar } from '@/components/SearchBar'
 import { RecipeFilters } from '@/components/RecipeFilters'
+import { StartupPage } from '@/components/StartupPage'
 import { RecipeSearchFilters } from '@/types/recipe'
 
 export default function Home() {
   const router = useRouter()
   const [searchQuery, setSearchQuery] = useState('')
   const [filters, setFilters] = useState<RecipeSearchFilters>({})
+  const [showHomepage, setShowHomepage] = useState(false)
+  const { isFirstVisit, isLoading: isVisitLoading, markAsVisited } = useFirstVisit()
 
   // Combine search query with filters
   const activeFilters = useMemo(() => ({
@@ -30,7 +34,28 @@ export default function Home() {
     return Array.from(new Set(allTags)).sort()
   }, [recipesData?.recipes])
 
+  // Handle the transition from startup to homepage
+  const handleEnterSite = () => {
+    markAsVisited()
+    setShowHomepage(true)
+  }
+
+  // Show loading spinner while checking first visit status
+  if (isVisitLoading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
+        <CircularProgress />
+      </Box>
+    )
+  }
+
+  // Show startup page for first-time visitors
+  if (isFirstVisit && !showHomepage) {
+    return <StartupPage onEnter={handleEnterSite} />
+  }
+
   return (
+    <Fade in={!isFirstVisit || showHomepage} timeout={800}>
     <Container maxWidth="lg">
       <Box sx={{ py: 4 }}>
         <Typography variant="h1" component="h1" align="center" gutterBottom>
@@ -118,5 +143,6 @@ export default function Home() {
         <Add />
       </Fab>
     </Container>
+    </Fade>
   )
 }

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Yael's Recipes is a Hebrew RTL recipe management application built with Next.js 14, featuring Temporal.io workflow orchestration, PostgreSQL database, and comprehensive testing. The application is designed specifically for Hebrew content with right-to-left layout support.
+Yael's Recipes is a Hebrew RTL recipe management application built with Next.js 14, featuring Temporal.io workflow orchestration, PostgreSQL database, and comprehensive testing. The application is designed specifically for Hebrew content with right-to-left layout support, and includes an elegant animated startup page that welcomes users on each new session.
 
 ## Architecture
 
@@ -158,6 +158,44 @@ NEXT_PUBLIC_APP_URL="http://localhost:3000"
 TEMPORAL_ADDRESS="localhost:7234"
 TEMPORAL_NAMESPACE="default"
 ```
+
+## Startup Page & Session Management
+
+The application features an elegant animated startup page that provides a warm welcome for new sessions while maintaining optimal user experience.
+
+### StartupPage Component (`src/components/StartupPage.tsx`)
+A beautifully animated welcome screen with:
+- **Floating Images**: Four circular images with smooth floating animations at different positions
+- **Sequential Animations**: Title, subtitle, and dedication text appear in timed sequence
+- **Hebrew RTL Support**: Fully compatible with Hebrew layout and typography
+- **Click-to-Continue**: Entire page is clickable to proceed to main application
+- **Responsive Design**: Adapts beautifully to all screen sizes
+
+### Session-Based Display Logic
+Uses `sessionStorage` for intelligent display management:
+- **Shows startup page**: On new tabs, new browser windows, fresh browser sessions
+- **Skips startup page**: On page refreshes, back/forward navigation within same tab
+- **Perfect Balance**: Welcoming for new sessions, non-intrusive for active usage
+
+### useFirstVisit Hook (`src/hooks/useFirstVisit.ts`)
+Custom hook managing startup page display logic:
+```typescript
+// Session-based storage for optimal UX
+const hasVisited = sessionStorage.getItem(FIRST_VISIT_KEY)
+const markAsVisited = () => sessionStorage.setItem(FIRST_VISIT_KEY, 'true')
+```
+
+### Implementation Details
+- **Integration**: Main page (`src/app/page.tsx`) conditionally renders StartupPage vs Homepage
+- **Smooth Transitions**: Fade animations between startup and main content
+- **Development Testing**: Use browser dev tools to clear sessionStorage for retesting
+- **Storybook Support**: Full documentation with interactive examples
+
+### Key Benefits
+- **Brand Experience**: Professional, warm first impression
+- **User Engagement**: Beautiful animations create emotional connection
+- **Performance**: Minimal impact on app load time
+- **Accessibility**: Respects user preferences and maintains usability
 
 ## Hebrew RTL Considerations
 
