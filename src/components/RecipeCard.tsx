@@ -92,7 +92,20 @@ export function RecipeCard({ recipe, onClick }: RecipeCardProps) {
         </Box>
 
         <CardContent sx={{ flexGrow: 1 }}>
-          <Typography variant="h6" component="h3" gutterBottom data-testid="recipe-title">
+          <Typography
+            variant="h6"
+            component="h3"
+            gutterBottom
+            data-testid="recipe-title"
+            sx={{
+              overflow: 'hidden',
+              display: '-webkit-box',
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical',
+              lineHeight: 1.2,
+              minHeight: '2.4em', // Ensure consistent height for 2 lines
+            }}
+          >
             {recipe.title}
           </Typography>
 
