@@ -39,7 +39,7 @@ model Recipe {
   id               String         @id @default(cuid())
   title            String
   description      String?
-  category         RecipeCategory
+  category         RecipeCategory // Simplified: MAIN, SIDE, DESSERT
   prepTimeMinutes  Int
   cookTimeMinutes  Int
   servings         Int
@@ -51,6 +51,12 @@ model Recipe {
   updatedAt        DateTime       @updatedAt
   createdBy        String
   lastModifiedBy   String
+}
+
+enum RecipeCategory {
+  MAIN      // מנה עיקרית
+  SIDE      // תוספת
+  DESSERT   // קינוח
 }
 ```
 
@@ -177,6 +183,15 @@ The application includes a comprehensive Hebrew ingredients autocomplete system:
 - **Categories**: דגנים וקמח, ירקות, פירות, בשר ועוף ודגים, חלב וביצים, קטניות ואגוזים, שמנים ושומנים, תבלינים ועשבי תיבול, מתקנים וסוכרים, שוקולד וחמרים מתוקים, חומרי אפייה, משקאות, רטבים וחומרי טעם, שימורים ומזון מעובד
 - **Features**: Smart search (exact matches first, then partial), categorized suggestions, allows custom ingredients
 - **Testing**: Storybook stories with Hebrew examples and interactive demonstrations
+
+#### Simplified Recipe Filtering
+The application features a clean, minimal filtering system for recipes:
+- **UI Component**: `src/components/RecipeFilters.tsx` - Simple button group design
+- **Design**: Clean Paper container with rounded buttons for category selection
+- **Categories**: Only 3 simplified categories (הכל, מנה עיקרית, תוספת, קינוח)
+- **User Experience**: Centered button group that works well on mobile and desktop
+- **RTL Support**: Uses individual Button components with proper spacing for Hebrew text
+- **Accessibility**: Large touch targets, clear visual feedback for selected state
 
 ### Testing Hebrew Content
 - Use custom Cypress commands: `cy.typeHebrew()`, `cy.shouldContainHebrew()`

@@ -1,11 +1,7 @@
 export enum RecipeCategory {
-  APPETIZER = 'APPETIZER',
-  SOUP = 'SOUP',
   MAIN = 'MAIN',
   SIDE = 'SIDE',
   DESSERT = 'DESSERT',
-  BEVERAGE = 'BEVERAGE',
-  SNACK = 'SNACK',
 }
 
 export interface Ingredient {

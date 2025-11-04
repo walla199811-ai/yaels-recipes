@@ -31,11 +31,7 @@ model Recipe {
 }
 
 enum RecipeCategory {
-  APPETIZER
-  SOUP
   MAIN
   SIDE
   DESSERT
-  BEVERAGE
-  SNACK
 }

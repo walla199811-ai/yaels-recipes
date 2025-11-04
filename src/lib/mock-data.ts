@@ -5,7 +5,7 @@ export const mockRecipes: Recipe[] = [
     id: '1',
     title: "מרק עוף של סבתא",
     description: "מרק עוף מסורתי ומחמם הלב, מושלם לימים קרים ולמפגשים משפחתיים.",
-    category: RecipeCategory.SOUP,
+    category: RecipeCategory.MAIN,
     prepTimeMinutes: 20,
     cookTimeMinutes: 90,
     servings: 8,
